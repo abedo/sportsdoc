@@ -11,16 +11,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/place")
+ * @Route("/{prefix}/place", defaults={"prefix": "mobile"})
  */
 class PlaceController extends AbstractController
 {
     /**
      * @Route("/", name="place_index", methods={"GET"})
      */
-    public function index(PlaceRepository $placeRepository): Response
+    public function index(PlaceRepository $placeRepository, $prefix): Response
     {
-        return $this->render('place/index.html.twig', [
+        return $this->render('place/index.' . ($prefix == 'mobile' ? 'mobile.' : '') . 'html.twig', [
             'places' => $placeRepository->findAll(),
         ]);
     }

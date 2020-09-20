@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Place index{% endblock %}
+
+{% block body %}
+    <div class="row ml-3 pt-3">
+        <a href="{{ path('place_new') }}" type="button" class="btn btn-primary btn-lg">Add place</a>
+    </div>
+
+    <div class="row ml-3 pt-3">
+        <div class="alert alert-primary" role="alert">
+            A simple primary alert—check it out!
+        </div>
+    </div>
+
+    <!-- Swiper -->
+    <div class="swiper-container">
+        <div class="swiper-wrapper">
+            {% for place in places %}
+                <div class="swiper-slide">
+                    <div>
+                        <table class="table">
+                            <tbody>
+                            <tr>
+                                <th>Id</th>
+                                <td>{{ place.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Name</th>
+                                <td>{{ place.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Address</th>
+                                <td>{{ place.address }}</td>
+                            </tr>
+                            <tr>
+                                <th>Zip_code</th>
+                                <td>{{ place.zip }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">Gry</h5>
+                            <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                            <a href="#" class="btn btn-primary">Go somewhere</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <!-- Add Arrows -->
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+
+{% endblock %}
