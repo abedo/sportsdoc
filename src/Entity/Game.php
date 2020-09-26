@@ -18,7 +18,7 @@ class Game
     private $id;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="date")
      */
     private $createdAt;
 
@@ -32,6 +32,11 @@ class Game
      * @ORM\JoinColumn(nullable=false)
      */
     private $place;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {
