@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Game;
 use App\Form\GameType;
 use App\Repository\GameRepository;
+use App\Repository\PlaceRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,9 +29,10 @@ class GameController extends AbstractController
     /**
      * @Route("/new", name="game_new", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function new(Request $request, PlaceRepository $place): Response
     {
         $game = new Game();
+        $game->setPlace($place->findOneBy(['id' => $request->query->get('place', 1)]));
         $form = $this->createForm(GameType::class, $game);
         $form->handleRequest($request);
 
