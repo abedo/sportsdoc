@@ -60,10 +60,12 @@ Testy funkcjonalne (CRUD wszystkich encji, strona logowania, przekierowanie do G
 
 **PHP:** Symfony 8 wymaga 8.4, a panel DirectAdmin oferuje dla tej domeny tylko 8.3 i 7.4. Wersję 8.4 wymusza linia `AddHandler application/x-httpd-php84 php` w `.htaccess` (w głównym i w `public/`). Nie usuwaj jej. CLI na serwerze: `/opt/alt/php84/usr/bin/php`.
 
+Baza na iqhost to **MariaDB 11.4**, dlatego w `DATABASE_URL` jest `serverVersion=mariadb-11.4.13` (z wersją MySQL `doctrine:schema:validate` zawsze zgłasza różnicę w `user.roles`).
+
 **Pierwsze uruchomienie** (jednorazowo, na serwerze w `.env.local`, który nie trafia do repozytorium):
 
 ```
-DATABASE_URL="mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY?serverVersion=8.0.32&charset=utf8mb4"
+DATABASE_URL="mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY?serverVersion=mariadb-11.4.13&charset=utf8mb4"
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 FACEBOOK_APP_ID=...
