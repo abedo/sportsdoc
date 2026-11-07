@@ -1,0 +1,19 @@
+# Symfony front controller (Apache / LiteSpeed + mod_rewrite)
+# PHP 8.4 (Symfony 8 wymaga 8.4+). Nazwa handlera jak w alt-php na iqhost.
+AddHandler application/x-httpd-php84 php
+
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Przekazanie naglowka Authorization
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
+    # Istniejace pliki (css, js) serwuj bezposrednio
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    RewriteRule ^ index.php [L]
+</IfModule>
