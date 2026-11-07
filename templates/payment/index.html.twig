@@ -1,37 +1,38 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Payment index{% endblock %}
+{% block title %}Płatności{% endblock %}
 
 {% block body %}
-    <h1>Payment index</h1>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for payment in payments %}
-            <tr>
-                <td>{{ payment.id }}</td>
-                <td>{{ payment.date ? payment.date|date('Y-m-d') : '' }}</td>
-                <td>{{ payment.amount }}</td>
-                <td>
-                    <a href="{{ path('payment_show', {'id': payment.id}) }}">show</a>
-                    <a href="{{ path('payment_edit', {'id': payment.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ path('payment_new') }}">Create new</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Płatności</h1>
+        <a class="btn btn-outline-primary btn-sm" href="{{ path('payment_new') }}">+ Dodaj wpłatę</a>
+    </div>
+    <p class="text-muted small">Najpierw wpłaty zgłoszone przez osoby i czekające na potwierdzenie.</p>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white">
+            <thead><tr><th>Data</th><th>Miejsce</th><th>Osoba</th><th class="text-end">Kwota</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for payment in payments %}
+                <tr class="{{ payment.confirmed ? '' : 'table-warning' }}">
+                    <td>{{ payment.date|date('d.m.Y') }}</td>
+                    <td>{{ payment.place }}</td>
+                    <td>{{ payment.user }}</td>
+                    <td class="text-end">{{ payment.amount }} zł</td>
+                    <td>{% if payment.confirmed %}<span class="badge text-bg-success">potwierdzona</span>{% else %}<span class="badge text-bg-warning">czeka</span>{% endif %}</td>
+                    <td class="text-end text-nowrap">
+                        {% if not payment.confirmed %}
+                            <form method="post" action="{{ path('payment_confirm', {'id': payment.id}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('confirm' ~ payment.id) }}">
+                                <button class="btn btn-success btn-sm">Potwierdź</button>
+                            </form>
+                        {% endif %}
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('payment_edit', {'id': payment.id}) }}">Edytuj</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-muted">Brak płatności.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}

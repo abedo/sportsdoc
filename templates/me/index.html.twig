@@ -1,0 +1,85 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Moje rozliczenie{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Moje rozliczenie</h1>
+    <p class="text-muted small">Każde miejsce rozlicza się osobno, bo wpłaty trafiają do organizatora danego miejsca.</p>
+
+    {% for b in balances %}
+        <h2 class="h6 text-uppercase text-muted mt-3">{{ b.place }}</h2>
+        {{ include('_partials/balance.html.twig', {balance: b.balance}) }}
+    {% else %}
+        <div class="alert alert-info">Nie należysz jeszcze do żadnego miejsca. <a href="{{ path('place_search') }}">Znajdź miejsce</a> i dołącz.</div>
+    {% endfor %}
+
+    {% if balances is not empty %}
+        <div class="card my-3">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Zgłoś wpłatę</h2>
+                <p class="small text-muted">Wpisz kwotę, którą przelałeś organizatorowi miejsca. Saldo zmieni się, gdy organizator potwierdzi wpłatę.</p>
+                <form method="post" action="{{ path('me_payment') }}" class="row g-2">
+                    <input type="hidden" name="_token" value="{{ csrf_token('me-payment') }}">
+                    <div class="col-12 col-md">
+                        <label class="visually-hidden" for="place">Miejsce</label>
+                        <select class="form-select" id="place" name="place" required>
+                            {% for b in balances %}<option value="{{ b.place.id }}">{{ b.place }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label class="visually-hidden" for="amount">Kwota</label>
+                        <input class="form-control" type="number" min="1" step="1" id="amount" name="amount" placeholder="Kwota" required>
+                    </div>
+                    <div class="col-auto"><button class="btn btn-primary">Zgłoś wpłatę</button></div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <h2 class="h6 text-uppercase text-muted">Gry, w których byłem</h2>
+            {% if attended is empty %}
+                <p class="text-muted">Jeszcze nie zaznaczono żadnej gry.</p>
+            {% else %}
+                <ul class="list-group">
+                    {% for a in attended %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <a href="{{ path('game_show', {'id': a.game.id}) }}">{{ a.game.createdAt|date('d.m.Y') }}, {{ a.game.place }}</a>
+                            <span class="text-muted">{{ a.game.cost }} zł</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h2 class="h6 text-uppercase text-muted">Moje wpłaty</h2>
+            {% if payments is empty %}
+                <p class="text-muted">Brak wpłat.</p>
+            {% else %}
+                <ul class="list-group">
+                    {% for p in payments %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ p.date|date('d.m.Y') }}, {{ p.place }}</span>
+                            <span>{{ p.amount }} zł
+                                {% if p.confirmed %}<span class="badge text-bg-success">potwierdzona</span>{% else %}<span class="badge text-bg-warning">czeka</span>{% endif %}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2 class="h6 text-uppercase text-muted mt-4">Metody logowania</h2>
+    <p class="small text-muted">Połącz drugie konto, żeby logować się Google i Facebookiem do tego samego profilu.</p>
+    <div class="d-flex gap-2">
+        {% for provider, label in {google: 'Google', facebook: 'Facebook'} %}
+            {% if provider in providers %}
+                <span class="btn btn-outline-success btn-sm disabled">{{ label }}: połączono</span>
+            {% else %}
+                <a class="btn btn-outline-primary btn-sm" href="{{ path('connect_link', {provider: provider}) }}">Połącz z {{ label }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}

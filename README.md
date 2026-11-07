@@ -1,70 +1,81 @@
-sportsdoc
-=================
+# Sportsdoc
 
-composer create-project symfony/skeleton:"^4.4" sportsdoc
+Ewidencja uczestnictwa w zajęciach sportowych: miejsca, gry, lista obecności, wpłaty i rozliczenia. Symfony 8.1, PHP 8.4+, Doctrine ORM 3, logowanie przez Google i Facebooka (KnpU OAuth2).
 
-composer require symfony/maker-bundle
+Projekt przeniesiony z Symfony 4.4 (2020). Szczegóły w sekcji „Co się zmieniło”.
 
-composer require symfony/orm-pack
+## Jak to działa
 
-composer require twig
+Zapisy na zajęcia odbywają się poza aplikacją (np. na grupach na Facebooku). Sportsdoc służy do obecności i rozliczeń. Facebook nie udostępnia API grup, więc nic nie jest stamtąd importowane.
 
-composer require knpuniversity/oauth2-client-bundle
+**Role.** Rola jest per miejsce:
+- **Organizator miejsca** zakłada miejsce (musi mieć globalną rolę `ROLE_ORGANIZER`) i od razu zostaje jego organizatorem. W swoim miejscu dodaje gry, zaznacza obecność wszystkich, potwierdza wpłaty, mianuje innych organizatorów i usuwa uczestników. Nie ma uprawnień w cudzych miejscach.
+- **Uczestnik** wyszukuje miejsce („Znajdź miejsce”: po nazwie lub mieście) i dołącza jednym kliknięciem. Zaznacza „Byłem / Nie byłem” tylko dla siebie i zgłasza wpłatę. Zgłoszona wpłata czeka na potwierdzenie organizatora tego miejsca i do tego czasu nie zmienia salda.
+- **Administrator serwisu** (`ROLE_ADMIN`) widzi i zmienia wszystko oraz zarządza osobami (`/user/`).
 
-composer require league/oauth2-google
+Ekran startowy pokazuje tylko moje miejsca (przełączanie strzałkami, ← → albo przesunięciem palcem). Każde miejsce rozlicza się osobno: saldo = potwierdzone wpłaty minus koszt gier, w których osoba była, w tym miejscu. Opuszczenie miejsca nie kasuje historii.
 
-composer require league/oauth2-facebook
+**Kto zostaje organizatorem.** Nikt nie dostaje tej roli sam. Administrator nadaje ją checkboxem w formularzu osoby albo komendą:
+`php bin/console app:user:admin adres@example.com` (organizator), z `--admin` (administrator), z `--remove` odbiera rolę. Pierwszego administratora trzeba nadać komendą (`--admin`), bo logowanie tworzy tylko zwykłe konta. Osoba musi mieć adres e-mail w profilu, więc organizatora, który loguje się Facebookiem bez e-maila, nadaje się w panelu `/user/`.
 
-php bin/console doctrine:database:create
+**Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do osoby dodanej wcześniej w panelu z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta). Drugiego dostawcę osoba łączy sama w „Moim rozliczeniu”.
 
-php bin/console doctrine:schema:validate
+## Uruchomienie lokalnie
 
-php bin/console make:entity
-
-Place
-
-php bin/console doctrine:schema:validate
-
-php bin/console make:migration
-
+```
+composer install
+cp .env .env.local        # ustaw w .env.local: DATABASE_URL, GOOGLE_CLIENT_ID/SECRET, FACEBOOK_APP_ID/SECRET
 php bin/console doctrine:migrations:migrate
+symfony server:start      # albo: php -S 127.0.0.1:8000 -t public
+```
 
-php bin/console doctrine:schema:validate
+Bez serwera MySQL można użyć SQLite: w `.env.local` ustaw
+`DATABASE_URL="sqlite:///%kernel.project_dir%/var/data_dev.db"` i zamiast migracji uruchom
+`php bin/console doctrine:schema:create` (stare migracje zawierają SQL specyficzny dla MySQL).
 
-php bin/console make:crud
+Lokalnie bez Google: w trybie dev strona `/dev/login` pozwala zalogować się jako dowolna osoba z bazy (nie istnieje w prod ani w testach).
 
-composer require form validator security-csrf annotations
+Logowanie Google: w Google Cloud Console dodaj adres zwrotny `https://TWOJA-DOMENA/connect/google/check`.
 
-php bin/console make:crud
+Logowanie Facebook: w developers.facebook.com utwórz aplikację z produktem „Facebook Login” i dodaj ważny adres przekierowania `https://TWOJA-DOMENA/connect/facebook/check`. Dopóki aplikacja jest w trybie deweloperskim, logować mogą się tylko osoby dodane jako testerzy. Żeby otworzyć ją dla wszystkich, przełącz aplikację na tryb publiczny, a przed tym podaj adres polityki prywatności i adres usuwania danych użytkownika. Wystarczą uprawnienia `public_profile` i `email` (nie wymagają pełnej weryfikacji aplikacji).
 
-php -S 127.0.0.1:9046
+## Testy
 
-php bin/console make:user
+```
+php bin/phpunit
+```
 
-composer require security
+Testy funkcjonalne (CRUD wszystkich encji, strona logowania, przekierowanie do Google) działają na SQLite w pliku `var/test.db`, więc nie potrzebują MySQL.
 
-php bin/console make:migration
+## Co się zmieniło względem Symfony 4.4
 
-php bin/console doctrine:migrations:migrate
+- Adnotacje Doctrine i `@Route` zastąpione atrybutami PHP, encje mają typowane właściwości.
+- Usunięte `sensio/framework-extra-bundle`, `composer/package-versions-deprecated` oraz niewykorzystywany `UserProvider`.
+- Logowanie: stary Guard authenticator zastąpiony nowym systemem (`SocialAuthenticator` na `OAuth2Authenticator`, `custom_authenticators`). `User` implementuje `getUserIdentifier()` (id osoby).
+- Kontrolery: `getDoctrine()` zastąpione wstrzykiwanym `EntityManagerInterface`. Dodano `/` (przekierowanie do listy miejsc) oraz `/logout`. Poprzednie przekierowania po logowaniu wskazywały nieistniejące trasy (`default`, `blog_index`).
+- Schemat bazy jest równoważny z dotychczasowym (te same tabele, kolumny, indeksy i klucze), więc istniejąca baza nie wymaga zmian.
+- Pominięty EasyAdmin: w projekcie był podpięty w routingu, ale bez żadnej skonfigurowanej encji.
 
-php bin/console doctrine:schema:validate
+## Wdrożenie na iqhost
 
-php bin/console make:crud
+`deploy/iqhost.sh` buduje paczkę bez zależności dev i testów, wgrywa ją przez rsync (klucz `~/.ssh/iqhost_ed25519`, konto `host32414`, host `host32414.iqhs.pl`) do `~/domains/abedo.pl/public_html/sportsdoc` i ogrzewa cache PHP 8.4. Główny `.htaccess` kieruje ruch do `public/`. Skrypt nie nadpisuje `var/` ani `.env.local`.
 
-php -S 127.0.0.1:9046
+**PHP:** Symfony 8 wymaga 8.4, a panel DirectAdmin oferuje dla tej domeny tylko 8.3 i 7.4. Wersję 8.4 wymusza linia `AddHandler application/x-httpd-php84 php` w `.htaccess` (w głównym i w `public/`). Nie usuwaj jej. CLI na serwerze: `/opt/alt/php84/usr/bin/php`.
 
-composer require symfony/asset
+**Pierwsze uruchomienie** (jednorazowo, na serwerze w `.env.local`, który nie trafia do repozytorium):
 
-git config --global user.email "logic@op.pl"
-git config --global user.name "abedo"
+```
+DATABASE_URL="mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY?serverVersion=8.0.32&charset=utf8mb4"
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+FACEBOOK_APP_ID=...
+FACEBOOK_APP_SECRET=...
+```
 
-git commit -m "first commit"
+Potem na serwerze: `php bin/console doctrine:migrations:migrate --env=prod` i nadanie pierwszego administratora: `php bin/console app:user:admin adres@example.com --admin --env=prod` (osoba musi się wcześniej zalogować przez Google albo zostać dodana w bazie). Adresy zwrotne: `https://sportsdoc.abedo.pl/connect/google/check` (Google Cloud Console) i `https://sportsdoc.abedo.pl/connect/facebook/check` (Facebook Login).
 
-git branch -M master
+## Dostęp i sekrety
 
-git remote add origin https://github.com/abedo/sportsdoc.git
-
-git push -u origin master
-
-Resources
-https://dev.to/_mertsimsek/integrate-oauth2-for-symfony-4-360c
+- Bez logowania dostępna jest tylko strona logowania. Uprawnienia do miejsc, gier i wpłat sprawdza `PlaceVoter` (`PLACE_VIEW`: członek miejsca, `PLACE_MANAGE`: organizator miejsca, administrator ma oba). Globalne reguły są w `config/packages/security.yaml`.
+- Każde konto, które się zaloguje, jest zwykłą osobą bez dostępu do żadnego miejsca, dopóki do niego nie dołączy. Miejsca są jawne w wyszukiwarce (nazwa i adres), a lista uczestników i obecności jest widoczna tylko dla członków. Jeśli dołączanie ma wymagać zatwierdzenia, trzeba dodać prośby o dołączenie.
+- Sekretów (hasło bazy, klucze Google i Facebooka) nie trzymamy w repozytorium: tylko w `.env.local` lub zmiennych środowiska.

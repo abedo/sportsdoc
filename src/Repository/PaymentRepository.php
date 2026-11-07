@@ -3,14 +3,13 @@
 namespace App\Repository;
 
 use App\Entity\Payment;
+use App\Entity\Place;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Payment|null find($id, $lockMode = null, $lockVersion = null)
- * @method Payment|null findOneBy(array $criteria, array $orderBy = null)
- * @method Payment[]    findAll()
- * @method Payment[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Payment>
  */
 class PaymentRepository extends ServiceEntityRepository
 {
@@ -19,32 +18,53 @@ class PaymentRepository extends ServiceEntityRepository
         parent::__construct($registry, Payment::class);
     }
 
-    // /**
-    //  * @return Payment[] Returns an array of Payment objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /** Suma potwierdzonych wpłat osoby w miejscu. */
+    public function totalPaid(User $user, Place $place): int
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        return $this->sumFor($user, $place, true);
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Payment
+    /** Suma wpłat zgłoszonych przez osobę w miejscu, które czekają na potwierdzenie. */
+    public function totalPending(User $user, Place $place): int
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $this->sumFor($user, $place, false);
     }
-    */
+
+    /**
+     * Liczba wpłat czekających na potwierdzenie w podanych miejscach.
+     *
+     * @param list<Place> $places
+     */
+    public function pendingCount(array $places): int
+    {
+        return [] === $places ? 0 : $this->count(['confirmed' => false, 'place' => $places]);
+    }
+
+    /**
+     * @param list<Place> $places
+     *
+     * @return list<Payment> wpłaty w podanych miejscach: najpierw czekające na potwierdzenie
+     */
+    public function latestForPlaces(array $places): array
+    {
+        if ([] === $places) {
+            return [];
+        }
+
+        return $this->findBy(['place' => $places], ['confirmed' => 'ASC', 'date' => 'DESC', 'id' => 'DESC']);
+    }
+
+    private function sumFor(User $user, Place $place, bool $confirmed): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COALESCE(SUM(p.amount), 0)')
+            ->where('p.user = :user')
+            ->andWhere('p.place = :place')
+            ->andWhere('p.confirmed = :confirmed')
+            ->setParameter('user', $user)
+            ->setParameter('place', $place)
+            ->setParameter('confirmed', $confirmed)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

@@ -1,0 +1,26 @@
+# Uklad "wszystko w katalogu strony" (hosting wspoldzielony): ruch idzie do public/,
+# a reszta projektu (vendor, src, config, .env...) nie jest dostepna z przegladarki.
+# Lepiej, jesli DocumentRoot wskazuje bezposrednio na public/ (wtedy ten plik nie jest potrzebny).
+# Symfony 8 wymaga PHP 8.4+. Panel DirectAdmin oferuje tu tylko 8.3/7.4, wiec wersje wymusza ta linia.
+# NIE usuwaj jej i nie zmieniaj na 8.3: aplikacja przestanie dzialac.
+AddHandler application/x-httpd-php84 php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Przekierowanie www -> bez www
+    RewriteCond %{HTTP_HOST} ^www\.sportsdoc\.abedo\.pl$ [NC]
+    RewriteRule ^ https://sportsdoc.abedo.pl%{REQUEST_URI} [R=301,L]
+
+    # Pliki statyczne z public/ (dopisz tu nowe katalogi/pliki, jesli dojda)
+    RewriteRule ^(?!public/)(?:css/.+|js/.+|bundles/.+|robots\.txt|favicon\.ico)$ public/$0 [L]
+
+    # Reszta to Symfony. Negative lookahead zapobiega petli po przepisaniu.
+    # (LiteSpeed nie stosuje public/.htaccess po wewnetrznym przepisaniu, wiec front controller jest tutaj.)
+    RewriteRule ^(?!public/) public/index.php [L]
+</IfModule>
+
+# Dodatkowa ochrona, gdyby przekierowanie bylo wylaczone
+<FilesMatch "^(\.env.*|composer\.(json|lock)|symfony\.lock|phpunit\.dist\.xml|AGENTS\.md|README\.md)$">
+    Require all denied
+</FilesMatch>

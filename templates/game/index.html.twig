@@ -1,37 +1,32 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Game index{% endblock %}
+{% block title %}Gry{% endblock %}
 
 {% block body %}
-    <h1>Game index</h1>
+    <h1 class="h3">Gry</h1>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>CreatedAt</th>
-                <th>Cost</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for game in games %}
-            <tr>
-                <td>{{ game.id }}</td>
-                <td>{{ game.createdAt ? game.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-                <td>{{ game.cost }}</td>
-                <td>
-                    <a href="{{ path('game_show', {'id': game.id}) }}">show</a>
-                    <a href="{{ path('game_edit', {'id': game.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ path('game_new') }}">Create new</a>
+    {% if games is empty %}
+        <div class="alert alert-info">Nie ma jeszcze gier w Twoich miejscach. Organizator dodaje grę z karty miejsca.</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle bg-white">
+                <thead>
+                    <tr><th>Data</th><th>Miejsce</th><th class="text-end">Koszt</th><th class="text-end">Obecnych</th><th></th></tr>
+                </thead>
+                <tbody>
+                {% for game in games %}
+                    <tr>
+                        <td><a href="{{ path('game_show', {'id': game.id}) }}">{{ game.createdAt|date('d.m.Y') }}</a></td>
+                        <td><a href="{{ path('place_index', {place: game.place.id}) }}">{{ game.place }}</a></td>
+                        <td class="text-end">{{ game.cost }} zł</td>
+                        <td class="text-end">{{ presentCounts[game.id] ?? 0 }}</td>
+                        <td class="text-end">
+                            {% if is_granted('PLACE_MANAGE', game) %}<a class="btn btn-outline-secondary btn-sm" href="{{ path('game_edit', {'id': game.id}) }}">Edytuj</a>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
 {% endblock %}

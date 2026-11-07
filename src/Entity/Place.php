@@ -7,45 +7,37 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=PlaceRepository::class)
- */
+#[ORM\Entity(repositoryClass: PlaceRepository::class)]
 class Place
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $name;
+    #[ORM\Column(length: 255)]
+    private ?string $name = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $address;
+    #[ORM\Column(length: 255)]
+    private ?string $address = null;
 
-    /**
-     * @ORM\Column(type="string", length=64)
-     */
-    private $city;
+    #[ORM\Column(length: 64)]
+    private ?string $city = null;
 
-    /**
-     * @ORM\Column(type="string", length=25)
-     */
-    private $zip;
+    #[ORM\Column(length: 25)]
+    private ?string $zip = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity=Game::class, mappedBy="place")
-     */
-    private $games;
+    /** @var Collection<int, Game> */
+    #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'place')]
+    private Collection $games;
+
+    /** @var Collection<int, PlaceMember> */
+    #[ORM\OneToMany(targetEntity: PlaceMember::class, mappedBy: 'place')]
+    private Collection $members;
 
     public function __construct()
     {
+        $this->members = new ArrayCollection();
         $this->games = new ArrayCollection();
     }
 
@@ -59,7 +51,7 @@ class Place
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -71,7 +63,7 @@ class Place
         return $this->address;
     }
 
-    public function setAddress(string $address): self
+    public function setAddress(string $address): static
     {
         $this->address = $address;
 
@@ -83,7 +75,7 @@ class Place
         return $this->city;
     }
 
-    public function setCity(string $city): self
+    public function setCity(string $city): static
     {
         $this->city = $city;
 
@@ -95,46 +87,46 @@ class Place
         return $this->zip;
     }
 
-    public function setZip(string $zip): self
+    public function setZip(string $zip): static
     {
         $this->zip = $zip;
 
         return $this;
     }
 
-    /**
-     * @return Collection|Game[]
-     */
+    /** @return Collection<int, PlaceMember> */
+    public function getMembers(): Collection
+    {
+        return $this->members;
+    }
+
+    /** @return Collection<int, Game> */
     public function getGames(): Collection
     {
         return $this->games;
     }
 
-    public function addGame(Game $game): self
+    public function addGame(Game $game): static
     {
         if (!$this->games->contains($game)) {
-            $this->games[] = $game;
+            $this->games->add($game);
             $game->setPlace($this);
         }
 
         return $this;
     }
 
-    public function removeGame(Game $game): self
+    public function removeGame(Game $game): static
     {
-        if ($this->games->contains($game)) {
-            $this->games->removeElement($game);
-            // set the owning side to null (unless already changed)
-            if ($game->getPlace() === $this) {
-                $game->setPlace(null);
-            }
+        if ($this->games->removeElement($game) && $game->getPlace() === $this) {
+            $game->setPlace(null);
         }
 
         return $this;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->name;
+        return (string) $this->name;
     }
 }
