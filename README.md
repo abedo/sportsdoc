@@ -74,6 +74,10 @@ FACEBOOK_APP_SECRET=...
 
 Potem na serwerze: `php bin/console doctrine:migrations:migrate --env=prod`. Pierwsza osoba po zalogowaniu wybiera rolę na stronie powitalnej, więc żadnej komendy nie trzeba. Adresy zwrotne: `https://sportsdoc.abedo.pl/connect/google/check` (Google Cloud Console) i `https://sportsdoc.abedo.pl/connect/facebook/check` (Facebook Login).
 
+## Strony prawne i usuwanie konta
+
+Publiczne strony `/privacy` (polityka prywatności) i `/data-deletion` (instrukcja usuwania danych) są wymagane przez Facebooka i Google przy publikacji aplikacji. Adres kontaktowy na nich pochodzi ze zmiennej `CONTACT_EMAIL` (domyślnie `sportsdoc@abedo.pl` w `.env`). Konto usuwa osoba sama w „Moim rozliczeniu”: imię, e-mail, powiązanie z Google/Facebookiem i członkostwa są kasowane, a obecności i wpłaty zostają jako „Usunięty użytkownik” (rozliczenia organizatorów). Jedyny organizator miejsca z innymi uczestnikami musi najpierw mianować następcę. Teksty to szkic, nie porada prawna.
+
 ## Dostęp i sekrety
 
 - Bez logowania dostępna jest tylko strona logowania. Uprawnienia do miejsc, gier i wpłat sprawdza `PlaceVoter` (`PLACE_VIEW`: członek miejsca, `PLACE_MANAGE`: organizator miejsca). Globalne reguły są w `config/packages/security.yaml`.

@@ -7,9 +7,11 @@ use App\Entity\User;
 use App\Repository\AttendanceRepository;
 use App\Repository\PaymentRepository;
 use App\Repository\PlaceMemberRepository;
+use App\Service\AccountAnonymizer;
 use App\Service\BalanceCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -62,6 +64,30 @@ final class MeController extends AbstractController
         $this->addFlash('success', 'Wpłata zgłoszona. Saldo zmieni się po potwierdzeniu przez organizatora miejsca.');
 
         return $this->redirectToRoute('me');
+    }
+
+    /** Usunięcie konta: dane osobowe znikają, obecności i wpłaty zostają bez nazwiska (rozliczenia organizatorów). */
+    #[Route('/me/delete', name: 'me_delete', methods: ['POST'])]
+    public function deleteAccount(Request $request, AccountAnonymizer $anonymizer, Security $security): Response
+    {
+        $me = $this->currentUser();
+        if (!$this->isCsrfTokenValid('me-delete', (string) $request->request->get('_token')) || '1' !== ($request->request->all()['confirm'] ?? null)) {
+            $this->addFlash('danger', 'Zaznacz potwierdzenie, żeby usunąć konto.');
+
+            return $this->redirectToRoute('me');
+        }
+        $blocking = $anonymizer->blockingPlaces($me);
+        if ([] !== $blocking) {
+            $this->addFlash('danger', sprintf('Jesteś jedynym organizatorem miejsc: %s. Najpierw mianuj tam innego organizatora albo usuń uczestników.', implode(', ', array_map(static fn ($p): string => (string) $p->getName(), $blocking))));
+
+            return $this->redirectToRoute('me');
+        }
+
+        $anonymizer->anonymize($me);
+        $security->logout(false);
+        $this->addFlash('success', 'Konto usunięte. Dane osobowe zostały skasowane.');
+
+        return $this->redirectToRoute('security_login');
     }
 
     private function currentUser(): User

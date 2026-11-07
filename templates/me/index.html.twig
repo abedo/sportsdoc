@@ -73,4 +73,15 @@
 
     <h2 class="h6 text-uppercase text-muted mt-4">Rola</h2>
     <p class="small">Jesteś: <strong>{{ app.user.appRole == 'organizer' ? 'organizatorem' : 'uczestnikiem' }}</strong>. <a href="{{ path('choose_role') }}">Zmień rolę</a></p>
+
+    <h2 class="h6 text-uppercase text-muted mt-4">Usuń konto</h2>
+    <p class="small text-muted">Skasujemy Twoje imię, e-mail i powiązanie z Google lub Facebookiem. Obecności i wpłaty zostają bez nazwiska, bo organizatorzy potrzebują ich do rozliczeń. <a href="{{ path('data_deletion') }}">Szczegóły</a></p>
+    <form method="post" action="{{ path('me_delete') }}" class="d-flex flex-wrap align-items-center gap-3" onsubmit="return confirm('Na pewno usunąć konto? Tego nie można cofnąć.')">
+        <input type="hidden" name="_token" value="{{ csrf_token('me-delete') }}">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="confirm" name="confirm" value="1" required>
+            <label class="form-check-label" for="confirm">Rozumiem, że to nieodwracalne</label>
+        </div>
+        <button class="btn btn-outline-danger btn-sm">Usuń moje konto</button>
+    </form>
 {% endblock %}

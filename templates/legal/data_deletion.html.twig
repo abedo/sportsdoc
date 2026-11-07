@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Usuwanie danych{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Usuwanie danych</h1>
+    <p class="lead">Możesz usunąć swoje konto i dane osobowe samodzielnie, w kilka kliknięć.</p>
+
+    <ol>
+        <li><a href="{{ path('security_login') }}">Zaloguj się</a> do Sportsdoc.</li>
+        <li>Wejdź w <strong>Moje rozliczenie</strong> i na dole strony w sekcji <strong>Usuń konto</strong> zaznacz potwierdzenie i kliknij „Usuń moje konto”.</li>
+    </ol>
+
+    <h2 class="h5 mt-4">Co zostanie usunięte</h2>
+    <ul>
+        <li>Imię i nazwisko oraz adres e-mail.</li>
+        <li>Powiązanie konta z Google lub Facebookiem (po usunięciu nie da się zalogować na stary profil).</li>
+        <li>Członkostwo we wszystkich miejscach.</li>
+    </ul>
+
+    <h2 class="h5 mt-4">Co zostanie</h2>
+    <p>Wpisy obecności i wpłat zostają jako „Usunięty użytkownik”, bez żadnych danych osobowych. Organizatorzy potrzebują ich do rozliczenia zajęć. Jeśli jesteś jedynym organizatorem miejsca, w którym są inni uczestnicy, najpierw mianuj tam innego organizatora (Miejsca → Uczestnicy).</p>
+
+    <h2 class="h5 mt-4">Nie możesz się zalogować?</h2>
+    {% if contact_email %}
+        <p>Napisz na <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> z adresu powiązanego z kontem albo podaj imię i nazwisko, jakich używasz w Sportsdoc. Usuniemy dane na Twoją prośbę.</p>
+    {% else %}
+        <p>Poproś organizatora swojego miejsca o usunięcie Cię z listy uczestników.</p>
+    {% endif %}
+
+    <p class="small text-muted mt-4">Usunięcie aplikacji Sportsdoc z ustawień Facebooka lub Google nie kasuje danych w Sportsdoc. Do tego służy powyższa procedura.</p>
+{% endblock %}

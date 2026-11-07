@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Polityka prywatności{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Polityka prywatności</h1>
+    <p class="text-muted">Serwis sportsdoc.abedo.pl służy do zapisywania obecności na zajęciach sportowych i rozliczania wpłat.</p>
+
+    <h2 class="h5 mt-4">Jakie dane zapisujemy</h2>
+    <ul>
+        <li>Imię i nazwisko z konta Google lub Facebook.</li>
+        <li>Stały identyfikator konta u dostawcy logowania. Służy tylko do rozpoznania Cię przy kolejnym logowaniu.</li>
+        <li>Adres e-mail, jeśli dostawca go udostępni (Facebook nie zawsze to robi).</li>
+        <li>Wybraną rolę (organizator lub uczestnik) i miejsca, do których należysz.</li>
+        <li>Obecności na grach oraz wpłaty (kwota, data, miejsce).</li>
+    </ul>
+    <p>Od Google pobieramy tylko podstawowy profil i e-mail, od Facebooka <code>public_profile</code> i <code>email</code>. Nie mamy dostępu do Twoich znajomych, grup, postów ani haseł.</p>
+
+    <h2 class="h5 mt-4">Kto widzi Twoje dane</h2>
+    <p>Organizatorzy miejsc, do których należysz, widzą Twoje imię i nazwisko, obecności i wpłaty w tym miejscu. Pozostali uczestnicy widzą Twoje imię i nazwisko na liście obecnych w grach z tego miejsca. Osoby spoza miejsca nie widzą niczego. Nie sprzedajemy danych i nie przekazujemy ich reklamodawcom.</p>
+
+    <h2 class="h5 mt-4">Cookies</h2>
+    <p>Używamy wyłącznie ciasteczka sesji (utrzymuje zalogowanie) i zabezpieczeń formularzy. Nie ma analityki ani reklam.</p>
+
+    <h2 class="h5 mt-4">Jak długo przechowujemy dane</h2>
+    <p>Do czasu usunięcia konta. Po usunięciu kasujemy imię, e-mail i powiązanie z Google lub Facebookiem. Wpisy obecności i wpłat zostają bez nazwiska, żeby organizatorzy mogli rozliczyć zajęcia. Szczegóły: <a href="{{ path('data_deletion') }}">Usuwanie danych</a>.</p>
+
+    <h2 class="h5 mt-4">Twoje prawa</h2>
+    <p>Możesz żądać dostępu do danych, ich sprostowania lub usunięcia oraz złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych. Konto usuniesz samodzielnie w aplikacji (Moje rozliczenie → Usuń konto).</p>
+
+    <h2 class="h5 mt-4">Kontakt</h2>
+    {% if contact_email %}
+        <p>W sprawach danych osobowych napisz na <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+    {% else %}
+        <p>W sprawach danych osobowych skontaktuj się z organizatorem swojego miejsca albo usuń konto samodzielnie w aplikacji.</p>
+    {% endif %}
+{% endblock %}

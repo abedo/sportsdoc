@@ -1,6 +1,8 @@
 twig:
     form_themes: ['bootstrap_5_layout.html.twig']
     file_name_pattern: '*.twig'
+    globals:
+        contact_email: '%env(CONTACT_EMAIL)%'
 
 when@test:
     twig:

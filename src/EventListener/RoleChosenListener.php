@@ -13,7 +13,7 @@ use Symfony\Component\Routing\RouterInterface;
 #[AsEventListener(event: RequestEvent::class, priority: 0)]
 final readonly class RoleChosenListener
 {
-    private const ALLOWED_ROUTES = ['choose_role', 'help', 'app_logout', 'security_login', 'connect', 'connect_google_check', 'connect_facebook_check'];
+    private const ALLOWED_ROUTES = ['choose_role', 'help', 'privacy', 'data_deletion', 'app_logout', 'security_login', 'connect', 'connect_google_check', 'connect_facebook_check'];
 
     public function __construct(private Security $security, private RouterInterface $router)
     {
