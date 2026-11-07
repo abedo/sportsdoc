@@ -8,47 +8,36 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- * @ORM\Entity(repositoryClass=UserRepository::class)
- */
+#[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=180, unique=true)
-     */
-    private $email;
+    #[ORM\Column(length: 180, unique: true)]
+    private ?string $email = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $fullname;
+    #[ORM\Column(length: 255)]
+    private ?string $fullname = null;
 
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $created_at;
+    // Nazwa kolumny zostaje created_at, tak jak w starych migracjach.
+    #[ORM\Column(name: 'created_at')]
+    private ?\DateTimeImmutable $createdAt;
 
-    /**
-     * @ORM\Column(type="json")
-     */
-    private $roles = [];
+    /** @var list<string> */
+    #[ORM\Column(type: 'json')]
+    private array $roles = [];
 
-    /**
-     * @ORM\OneToMany(targetEntity=Payment::class, mappedBy="user")
-     */
-    private $payments;
+    /** @var Collection<int, Payment> */
+    #[ORM\OneToMany(targetEntity: Payment::class, mappedBy: 'user')]
+    private Collection $payments;
 
     public function __construct()
     {
         $this->payments = new ArrayCollection();
-        $this->created_at = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -61,7 +50,7 @@ class User implements UserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(string $email): static
     {
         $this->email = $email;
 
@@ -73,112 +62,75 @@ class User implements UserInterface
         return $this->fullname;
     }
 
-    public function setFullname(string $fullname): self
+    public function setFullname(string $fullname): static
     {
         $this->fullname = $fullname;
 
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $created_at): self
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->created_at = $created_at;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
-    public function getUsername(): string
+    /** Identyfikator użytkownika w security (logowanie jest po adresie e-mail z Google). */
+    public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
 
-    /**
-     * @see UserInterface
-     */
+    /** @return list<string> */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
 
-        return array_unique($roles);
+        return array_values(array_unique($roles));
     }
 
-    public function setRoles(array $roles): self
+    /** @param list<string> $roles */
+    public function setRoles(array $roles): static
     {
         $this->roles = $roles;
 
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
-    public function getPassword()
-    {
-        // not needed for apps that do not check user passwords
-    }
-
-    /**
-     * @see UserInterface
-     */
-    public function getSalt()
-    {
-        // not needed for apps that do not check user passwords
-    }
-
-    /**
-     * @see UserInterface
-     */
-    public function eraseCredentials()
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
-    }
-
-    /**
-     * @return Collection|Payment[]
-     */
+    /** @return Collection<int, Payment> */
     public function getPayments(): Collection
     {
         return $this->payments;
     }
 
-    public function addPayment(Payment $payment): self
+    public function addPayment(Payment $payment): static
     {
         if (!$this->payments->contains($payment)) {
-            $this->payments[] = $payment;
+            $this->payments->add($payment);
             $payment->setUser($this);
         }
 
         return $this;
     }
 
-    public function removePayment(Payment $payment): self
+    public function removePayment(Payment $payment): static
     {
-        if ($this->payments->contains($payment)) {
-            $this->payments->removeElement($payment);
-            // set the owning side to null (unless already changed)
-            if ($payment->getUser() === $this) {
-                $payment->setUser(null);
-            }
+        if ($this->payments->removeElement($payment) && $payment->getUser() === $this) {
+            $payment->setUser(null);
         }
 
         return $this;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->fullname;
+        return (string) $this->fullname;
     }
 }

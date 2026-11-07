@@ -3,35 +3,30 @@
 namespace App\Entity;
 
 use App\Repository\PaymentRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=PaymentRepository::class)
- */
+#[ORM\Entity(repositoryClass: PaymentRepository::class)]
 class Payment
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="date")
-     */
-    private $date;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $date;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $amount;
+    #[ORM\Column]
+    private ?int $amount = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="payments")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $user;
+    /** Wpłata zgłoszona przez osobę czeka na potwierdzenie organizatora (false). Wpisy admina są od razu potwierdzone. */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $confirmed = true;
+
+    #[ORM\ManyToOne(inversedBy: 'payments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
 
     public function __construct()
     {
@@ -48,7 +43,7 @@ class Payment
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(\DateTimeInterface $date): static
     {
         $this->date = $date;
 
@@ -60,7 +55,7 @@ class Payment
         return $this->amount;
     }
 
-    public function setAmount(int $amount): self
+    public function setAmount(int $amount): static
     {
         $this->amount = $amount;
 
@@ -72,9 +67,21 @@ class Payment
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function isConfirmed(): bool
+    {
+        return $this->confirmed;
+    }
+
+    public function setConfirmed(bool $confirmed): static
+    {
+        $this->confirmed = $confirmed;
 
         return $this;
     }

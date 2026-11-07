@@ -1,0 +1,10 @@
+body { background: #f4f5f7; }
+.places-swiper { padding-bottom: 2.5rem; }
+.places-swiper .swiper-slide { height: auto; padding: 0 2.75rem; }
+.places-swiper .swiper-button-prev, .places-swiper .swiper-button-next { color: #0d6efd; top: 3rem; }
+.places-swiper .swiper-button-prev { left: 0; }
+.places-swiper .swiper-button-next { right: 0; }
+.places-swiper .swiper-button-prev::after, .places-swiper .swiper-button-next::after { font-size: 1.6rem; font-weight: 700; }
+.stat { text-align: center; }
+.stat .num { font-size: 1.5rem; font-weight: 600; line-height: 1.1; }
+@media (max-width: 575.98px) { .places-swiper .swiper-slide { padding: 0 2rem; } }

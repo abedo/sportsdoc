@@ -2,95 +2,182 @@
 
 namespace App\Controller;
 
+use App\Entity\Attendance;
 use App\Entity\Game;
+use App\Entity\Place;
+use App\Entity\User;
+use App\Form\GameCreateType;
 use App\Form\GameType;
+use App\Repository\AttendanceRepository;
 use App\Repository\GameRepository;
 use App\Repository\PlaceRepository;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-/**
- * @Route("/game")
- */
-class GameController extends AbstractController
+#[Route('/game')]
+final class GameController extends AbstractController
 {
-    /**
-     * @Route("/", name="game_index", methods={"GET"})
-     */
-    public function index(GameRepository $gameRepository): Response
+    #[Route('/', name: 'game_index', methods: ['GET'])]
+    public function index(GameRepository $gameRepository, AttendanceRepository $attendanceRepository): Response
     {
         return $this->render('game/index.html.twig', [
-            'games' => $gameRepository->findAll(),
+            'games' => $gameRepository->latest(),
+            'presentCounts' => $attendanceRepository->presentCountsByGame(),
         ]);
     }
 
-    /**
-     * @Route("/new", name="game_new", methods={"GET","POST"})
-     */
-    public function new(Request $request, PlaceRepository $place): Response
+    /** Krok 1 flow organizatora: nowa gra z karty miejsca, na razie tylko data. */
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/new', name: 'game_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager, PlaceRepository $placeRepository, GameRepository $gameRepository): Response
     {
-        $game = new Game();
-        $game->setPlace($place->findOneBy(['id' => $request->query->get('place', 1)]));
-        $form = $this->createForm(GameType::class, $game);
+        $place = $placeRepository->find((int) filter_var($request->query->all()['place'] ?? null, FILTER_VALIDATE_INT));
+        if (!$place instanceof Place) {
+            $this->addFlash('warning', 'Wybierz miejsce, w którym ma się odbyć gra.');
+
+            return $this->redirectToRoute('place_index');
+        }
+
+        $game = (new Game())->setPlace($place)->setCost($gameRepository->lastCostForPlace($place));
+        $form = $this->createForm(GameCreateType::class, $game);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($game);
             $entityManager->flush();
+            $this->addFlash('success', 'Gra dodana. Ustaw koszt i zaznacz obecnych.');
 
-            return $this->redirectToRoute('game_index');
+            return $this->redirectToRoute('game_edit', ['id' => $game->getId()]);
         }
 
-        return $this->render('game/new.html.twig', [
-            'game' => $game,
-            'form' => $form->createView(),
-        ]);
+        return $this->render('game/new.html.twig', ['game' => $game, 'place' => $place, 'form' => $form]);
     }
 
-    /**
-     * @Route("/{id}", name="game_show", methods={"GET"})
-     */
-    public function show(Game $game): Response
+    /** Widok dla wszystkich: szczegóły, kto był, a zwykła osoba zaznacza własną obecność. */
+    #[Route('/{id}', name: 'game_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(Game $game, UserRepository $userRepository, AttendanceRepository $attendanceRepository): Response
     {
+        $presence = $attendanceRepository->presenceMapForGame($game);
+        $me = $this->getUser();
+
         return $this->render('game/show.html.twig', [
             'game' => $game,
+            'presentUsers' => array_values(array_filter(
+                $userRepository->findBy([], ['fullname' => 'ASC']),
+                static fn (User $u): bool => $presence[$u->getId()] ?? false,
+            )),
+            'myPresence' => $me instanceof User ? ($presence[$me->getId()] ?? null) : null,
         ]);
     }
 
-    /**
-     * @Route("/{id}/edit", name="game_edit", methods={"GET","POST"})
-     */
-    public function edit(Request $request, Game $game): Response
-    {
+    /** Krok 2 flow organizatora: edycja gry i lista obecności. */
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/{id}/edit', name: 'game_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function edit(
+        Request $request,
+        Game $game,
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository,
+        AttendanceRepository $attendanceRepository,
+    ): Response {
         $form = $this->createForm(GameType::class, $game);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $entityManager->flush();
+            $this->addFlash('success', 'Zmiany zapisane.');
 
-            return $this->redirectToRoute('game_index');
+            return $this->redirectToRoute('game_edit', ['id' => $game->getId()]);
         }
+
+        $presence = $attendanceRepository->presenceMapForGame($game);
 
         return $this->render('game/edit.html.twig', [
             'game' => $game,
-            'form' => $form->createView(),
+            'form' => $form,
+            'users' => $userRepository->findBy([], ['fullname' => 'ASC']),
+            'presence' => $presence,
+            'presentCount' => count(array_filter($presence)),
         ]);
     }
 
-    /**
-     * @Route("/{id}", name="game_delete", methods={"DELETE"})
-     */
-    public function delete(Request $request, Game $game): Response
+    /** Organizator zapisuje listę obecności wszystkich: zaznaczeni „byli”, pozostali „nie byli”. */
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/{id}/attendance', name: 'game_attendance', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function saveAttendance(
+        Request $request,
+        Game $game,
+        UserRepository $userRepository,
+        AttendanceRepository $attendanceRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        if (!$this->isCsrfTokenValid('attendance'.$game->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Nieprawidłowy token formularza. Odśwież stronę i spróbuj ponownie.');
+
+            return $this->redirectToRoute('game_edit', ['id' => $game->getId()]);
+        }
+
+        $presentIds = array_map('intval', (array) $request->request->all('present'));
+        $existing = [];
+        foreach ($attendanceRepository->findBy(['game' => $game]) as $attendance) {
+            $existing[(int) $attendance->getUser()?->getId()] = $attendance;
+        }
+
+        foreach ($userRepository->findAll() as $user) {
+            $attendance = $existing[$user->getId()] ?? (new Attendance())->setGame($game)->setUser($user);
+            $attendance->setPresent(in_array($user->getId(), $presentIds, true));
+            $entityManager->persist($attendance);
+        }
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Lista obecności zapisana.');
+
+        return $this->redirectToRoute('game_edit', ['id' => $game->getId()]);
+    }
+
+    /** Zwykła osoba zaznacza wyłącznie własną obecność („byłem” / „nie byłem”). */
+    #[Route('/{id}/me', name: 'game_attendance_me', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function saveMyAttendance(
+        Request $request,
+        Game $game,
+        AttendanceRepository $attendanceRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $me = $this->getUser();
+        if (!$me instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('attendance-me'.$game->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Nieprawidłowy token formularza. Odśwież stronę i spróbuj ponownie.');
+
+            return $this->redirectToRoute('game_show', ['id' => $game->getId()]);
+        }
+
+        $attendance = $attendanceRepository->findOneFor($game, $me) ?? (new Attendance())->setGame($game)->setUser($me);
+        $attendance->setPresent('1' === $request->request->get('present'));
+        $entityManager->persist($attendance);
+        $entityManager->flush();
+
+        $this->addFlash('success', $attendance->isPresent() ? 'Zapisano: byłeś na tej grze.' : 'Zapisano: nie byłeś na tej grze.');
+
+        return $this->redirectToRoute('game_show', ['id' => $game->getId()]);
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/{id}', name: 'game_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
+    public function delete(Request $request, Game $game, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$game->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->getDoctrine()->getManager();
+        $placeId = $game->getPlace()?->getId();
+        if ($this->isCsrfTokenValid('delete'.$game->getId(), (string) $request->request->get('_token'))) {
             $entityManager->remove($game);
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('game_index');
+        return $this->redirectToRoute('place_index', ['place' => $placeId]);
     }
 }

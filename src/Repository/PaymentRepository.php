@@ -3,14 +3,12 @@
 namespace App\Repository;
 
 use App\Entity\Payment;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Payment|null find($id, $lockMode = null, $lockVersion = null)
- * @method Payment|null findOneBy(array $criteria, array $orderBy = null)
- * @method Payment[]    findAll()
- * @method Payment[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Payment>
  */
 class PaymentRepository extends ServiceEntityRepository
 {
@@ -19,32 +17,38 @@ class PaymentRepository extends ServiceEntityRepository
         parent::__construct($registry, Payment::class);
     }
 
-    // /**
-    //  * @return Payment[] Returns an array of Payment objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /** Suma potwierdzonych wpłat osoby. */
+    public function totalPaid(User $user): int
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        return $this->sumFor($user, true);
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Payment
+    /** Suma wpłat zgłoszonych przez osobę, które czekają na potwierdzenie. */
+    public function totalPending(User $user): int
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $this->sumFor($user, false);
     }
-    */
+
+    public function pendingCount(): int
+    {
+        return $this->count(['confirmed' => false]);
+    }
+
+    /** @return list<Payment> */
+    public function latest(): array
+    {
+        return $this->findBy([], ['confirmed' => 'ASC', 'date' => 'DESC', 'id' => 'DESC']);
+    }
+
+    private function sumFor(User $user, bool $confirmed): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COALESCE(SUM(p.amount), 0)')
+            ->where('p.user = :user')
+            ->andWhere('p.confirmed = :confirmed')
+            ->setParameter('user', $user)
+            ->setParameter('confirmed', $confirmed)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

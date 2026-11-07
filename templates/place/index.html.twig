@@ -1,41 +1,86 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Place index{% endblock %}
+{% block title %}Miejsca{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11.1.14/swiper-bundle.min.css" rel="stylesheet">
+{% endblock %}
 
 {% block body %}
-    <h1>Place index</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Miejsca</h1>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a class="btn btn-outline-primary btn-sm" href="{{ path('place_new') }}">+ Dodaj miejsce</a>
+        {% endif %}
+    </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Address</th>
-                <th>City</th>
-                <th>Zip</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for place in places %}
-            <tr>
-                <td>{{ place.id }}</td>
-                <td>{{ place.name }}</td>
-                <td>{{ place.address }}</td>
-                <td>{{ place.city }}</td>
-                <td>{{ place.zip }}</td>
-                <td>
-                    <a href="{{ path('place_show', {'id': place.id}) }}">show</a>
-                    <a href="{{ path('place_edit', {'id': place.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="6">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    {% if cards is empty %}
+        <div class="alert alert-info">
+            Nie ma jeszcze żadnego miejsca.
+            {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('place_new') }}">Dodaj pierwsze</a>.{% else %}Poproś organizatora o dodanie miejsca.{% endif %}
+        </div>
+    {% else %}
+        <p class="text-muted small mb-2">Przełączaj miejsca strzałkami, klawiszami ← → albo przesunięciem palcem.</p>
+        <div class="swiper places-swiper" data-initial="{{ activeIndex }}">
+            <div class="swiper-wrapper">
+                {% for c in cards %}
+                    {% set place = c.place %}
+                    <div class="swiper-slide" data-place-id="{{ place.id }}">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h2 class="h4 mb-1">{{ place.name }}</h2>
+                                <p class="text-muted mb-3">{{ place.address }}, {{ place.zip }} {{ place.city }}</p>
 
-    <a href="{{ path('place_new') }}">Create new</a>
+                                <div class="row g-2 mb-3">
+                                    <div class="col stat"><div class="num">{{ c.gamesTotal }}</div><div class="small text-muted">gier</div></div>
+                                    <div class="col stat"><div class="num">{{ c.people }}</div><div class="small text-muted">osób grało</div></div>
+                                    {% if balance %}
+                                        <div class="col stat">
+                                            <div class="num {{ balance.balance < 0 ? 'text-danger' : 'text-success' }}">{{ balance.balance }}</div>
+                                            <div class="small text-muted">moje saldo</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        <a class="btn btn-success" href="{{ path('game_new', {'place': place.id}) }}">Dodaj grę</a>
+                                        <a class="btn btn-outline-secondary" href="{{ path('place_edit', {'id': place.id}) }}">Edytuj miejsce</a>
+                                        {{ include('_partials/delete_form.html.twig', {route: 'place_delete', id: place.id, label: 'Usuń miejsce'}) }}
+                                    </div>
+                                {% endif %}
+
+                                <h3 class="h6 text-uppercase text-muted">Ostatnie gry</h3>
+                                {% if c.games is empty %}
+                                    <p class="text-muted mb-0">Brak gier w tym miejscu.</p>
+                                {% else %}
+                                    <div class="list-group list-group-flush">
+                                        {% for game in c.games %}
+                                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0" href="{{ path('game_show', {'id': game.id}) }}">
+                                                <span>{{ game.createdAt|date('d.m.Y') }}</span>
+                                                <span class="text-muted small">{{ presentCounts[game.id] ?? 0 }} os. · {{ game.cost }} zł</span>
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                    {% if c.gamesTotal > c.games|length %}
+                                        <a class="small" href="{{ path('game_index') }}">Wszystkie gry</a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="swiper-button-prev" aria-label="Poprzednie miejsce"></div>
+            <div class="swiper-button-next" aria-label="Następne miejsce"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11.1.14/swiper-bundle.min.js"></script>
+    <script src="{{ asset('js/places.js') }}"></script>
 {% endblock %}

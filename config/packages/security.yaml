@@ -1,34 +1,35 @@
 security:
-    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    # Użytkownicy żyją w bazie; logowanie jest wyłącznie przez Google (bez haseł).
     providers:
-        # used to reload user from session & other features (e.g. switch_user)
-        my_provider:
+        app_user_provider:
             entity:
                 class: App\Entity\User
-                property: username
+                property: email
+
+    # Organizator (ROLE_ADMIN) może wszystko, co zwykła osoba (ROLE_USER).
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+
     firewalls:
         dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            pattern: ^/(_profiler(/|$)|(_wdt|assets|build|css|js)/)
             security: false
         main:
-            anonymous: ~
+            lazy: true
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator
             logout:
-                path: /logout
-                target: /login
-            logout_on_user_change: true
+                path: app_logout
+                target: security_login
 
-            guard:
-                authenticators:
-                    - App\Security\GoogleAuthenticator
-
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#firewalls-authentication
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+    # Bez logowania dostępne jest tylko logowanie. Uprawnienia admina są też na kontrolerach (#[IsGranted]).
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/(login|connect|logout), roles: PUBLIC_ACCESS }
+        - { path: ^/dev/login, roles: PUBLIC_ACCESS }
+        # Adresy tylko dla organizatora blokujemy tu, zanim kontroler wczyta encję (403 zamiast 404 dla zwykłej osoby).
+        - { path: '^/(user|payment)(/|$)', roles: ROLE_ADMIN }
+        - { path: '^/place/(new|\d+/edit)$', roles: ROLE_ADMIN }
+        - { path: '^/game/(new|\d+/(edit|attendance))$', roles: ROLE_ADMIN }
+        - { path: '^/(place|game)/\d+$', methods: [DELETE], roles: ROLE_ADMIN }
+        - { path: ^/, roles: ROLE_USER }

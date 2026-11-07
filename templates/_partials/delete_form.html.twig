@@ -1,0 +1,6 @@
+{# Parametry: route (nazwa trasy DELETE), id, label (opcjonalnie). #}
+<form method="post" action="{{ path(route, {'id': id}) }}" class="d-inline" onsubmit="return confirm('Na pewno usunąć?');">
+    <input type="hidden" name="_method" value="DELETE">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ id) }}">
+    <button class="btn btn-outline-danger btn-sm">{{ label|default('Usuń') }}</button>
+</form>

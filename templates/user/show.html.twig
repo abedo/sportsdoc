@@ -1,38 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}User{% endblock %}
+{% block title %}{{ user.fullname }}{% endblock %}
 
 {% block body %}
-    <h1>User</h1>
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="h3 mb-0">{{ user.fullname }}</h1>
+            <div class="text-muted">{{ user.email }}{% if 'ROLE_ADMIN' in user.roles %} · <span class="badge text-bg-secondary">organizator</span>{% endif %} · od {{ user.createdAt|date('d.m.Y') }}</div>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ path('user_edit', {'id': user.id}) }}">Edytuj</a>
+    </div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ user.id }}</td>
-            </tr>
-            <tr>
-                <th>Email</th>
-                <td>{{ user.email }}</td>
-            </tr>
-            <tr>
-                <th>Fullname</th>
-                <td>{{ user.fullname }}</td>
-            </tr>
-            <tr>
-                <th>Created_at</th>
-                <td>{{ user.createdAt ? user.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Roles</th>
-                <td>{{ user.roles ? user.roles|json_encode : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <h2 class="h6 text-uppercase text-muted">Rozliczenie</h2>
+    {{ include('_partials/balance.html.twig', {balance: balance}) }}
 
-    <a href="{{ path('user_index') }}">back to list</a>
-
-    <a href="{{ path('user_edit', {'id': user.id}) }}">edit</a>
-
-    {{ include('user/_delete_form.html.twig') }}
+    <div class="d-flex justify-content-between mt-3">
+        <a href="{{ path('user_index') }}">Wróć do listy</a>
+        {{ include('_partials/delete_form.html.twig', {route: 'user_delete', id: user.id, label: 'Usuń osobę'}) }}
+    </div>
 {% endblock %}

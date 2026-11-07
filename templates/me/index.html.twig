@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Moje rozliczenie{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Moje rozliczenie</h1>
+    {{ include('_partials/balance.html.twig', {balance: balance}) }}
+
+    <div class="card my-3">
+        <div class="card-body">
+            <h2 class="h6 text-uppercase text-muted">Zgłoś wpłatę</h2>
+            <p class="small text-muted">Wpisz kwotę, którą przelałeś organizatorowi. Saldo zmieni się, gdy organizator potwierdzi wpłatę.</p>
+            <form method="post" action="{{ path('me_payment') }}" class="row g-2">
+                <input type="hidden" name="_token" value="{{ csrf_token('me-payment') }}">
+                <div class="col">
+                    <label class="visually-hidden" for="amount">Kwota</label>
+                    <input class="form-control" type="number" min="1" step="1" id="amount" name="amount" placeholder="Kwota" required>
+                </div>
+                <div class="col-auto"><button class="btn btn-primary">Zgłoś wpłatę</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <h2 class="h6 text-uppercase text-muted">Gry, w których byłem</h2>
+            {% if attended is empty %}
+                <p class="text-muted">Jeszcze nie zaznaczono żadnej gry.</p>
+            {% else %}
+                <ul class="list-group">
+                    {% for a in attended %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <a href="{{ path('game_show', {'id': a.game.id}) }}">{{ a.game.createdAt|date('d.m.Y') }}, {{ a.game.place }}</a>
+                            <span class="text-muted">{{ a.game.cost }} zł</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h2 class="h6 text-uppercase text-muted">Moje wpłaty</h2>
+            {% if payments is empty %}
+                <p class="text-muted">Brak wpłat.</p>
+            {% else %}
+                <ul class="list-group">
+                    {% for p in payments %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ p.date|date('d.m.Y') }}</span>
+                            <span>{{ p.amount }} zł
+                                {% if p.confirmed %}<span class="badge text-bg-success">potwierdzona</span>{% else %}<span class="badge text-bg-warning">czeka</span>{% endif %}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

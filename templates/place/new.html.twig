@@ -1,11 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Place{% endblock %}
+{% block title %}Nowe miejsce{% endblock %}
 
 {% block body %}
-    <h1>Create new Place</h1>
-
+    <h1 class="h3">Nowe miejsce</h1>
     {{ include('place/_form.html.twig') }}
-
-    <a href="{{ path('place_index') }}">back to list</a>
+    <p class="mt-3"><a href="{{ path('place_index') }}">Wróć do miejsc</a></p>
 {% endblock %}

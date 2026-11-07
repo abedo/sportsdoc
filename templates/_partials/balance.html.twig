@@ -1,0 +1,7 @@
+{# Saldo osoby. Parametr: balance (z BalanceCalculator). balance < 0: do dopłaty, > 0: nadpłata. #}
+<div class="row g-2 text-center">
+    <div class="col-6 col-md-3"><div class="border rounded p-2 bg-white"><div class="small text-muted">Gry, w których był</div><div class="fs-5 fw-semibold">{{ balance.games }}</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 bg-white"><div class="small text-muted">Do zapłaty</div><div class="fs-5 fw-semibold">{{ balance.owed }}</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 bg-white"><div class="small text-muted">Wpłacone</div><div class="fs-5 fw-semibold">{{ balance.paid }}</div>{% if balance.pending > 0 %}<div class="small text-warning">+{{ balance.pending }} czeka na potwierdzenie</div>{% endif %}</div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 bg-white"><div class="small text-muted">Saldo</div><div class="fs-5 fw-semibold {{ balance.balance < 0 ? 'text-danger' : 'text-success' }}">{{ balance.balance }}</div><div class="small text-muted">{% if balance.balance < 0 %}do dopłaty{% elseif balance.balance > 0 %}nadpłata{% else %}rozliczone{% endif %}</div></div></div>
+</div>

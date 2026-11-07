@@ -3,39 +3,37 @@
 namespace App\Entity;
 
 use App\Repository\GameRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=GameRepository::class)
- */
+#[ORM\Entity(repositoryClass: GameRepository::class)]
 class Game
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="date")
-     */
-    private $createdAt;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $createdAt;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $cost;
+    #[ORM\Column]
+    private ?int $cost = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=Place::class, inversedBy="games")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $place;
+    #[ORM\ManyToOne(inversedBy: 'games')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Place $place = null;
+
+    /** @var Collection<int, Attendance> */
+    #[ORM\OneToMany(targetEntity: Attendance::class, mappedBy: 'game', orphanRemoval: true)]
+    private Collection $attendances;
 
     public function __construct()
     {
         $this->createdAt = new \DateTime();
+        $this->attendances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -48,7 +46,7 @@ class Game
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
 
@@ -60,7 +58,7 @@ class Game
         return $this->cost;
     }
 
-    public function setCost(int $cost): self
+    public function setCost(int $cost): static
     {
         $this->cost = $cost;
 
@@ -72,10 +70,16 @@ class Game
         return $this->place;
     }
 
-    public function setPlace(?Place $place): self
+    public function setPlace(?Place $place): static
     {
         $this->place = $place;
 
         return $this;
+    }
+
+    /** @return Collection<int, Attendance> */
+    public function getAttendances(): Collection
+    {
+        return $this->attendances;
     }
 }

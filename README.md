@@ -1,70 +1,61 @@
-sportsdoc
-=================
+# Sportsdoc
 
-composer create-project symfony/skeleton:"^4.4" sportsdoc
+Ewidencja uczestnictwa w zajęciach sportowych: miejsca, gry, lista obecności, wpłaty i rozliczenia. Symfony 8.1, PHP 8.4+, Doctrine ORM 3, logowanie przez Google (KnpU OAuth2).
 
-composer require symfony/maker-bundle
+Projekt przeniesiony z Symfony 4.4 (2020). Szczegóły w sekcji „Co się zmieniło”.
 
-composer require symfony/orm-pack
+## Jak to działa
 
-composer require twig
+**Organizator** (`ROLE_ADMIN`):
+1. Na ekranie startowym przełącza miejsca strzałkami (albo ← →, albo przesunięciem palcem).
+2. Na karcie miejsca klika „Dodaj grę” i podaje datę. Koszt jest podpowiedziany z poprzedniej gry w tym miejscu.
+3. Na stronie edycji gry ustawia koszt i zaznacza, kto był (lista obecności).
+4. W „Płatnościach” potwierdza wpłaty zgłoszone przez osoby i zarządza osobami.
 
-composer require knpuniversity/oauth2-client-bundle
+**Zwykła osoba** (`ROLE_USER`): przegląda miejsca i gry, w widoku gry zaznacza „Byłem / Nie byłem” tylko dla siebie, a w „Moim rozliczeniu” widzi saldo i zgłasza wpłatę. Zgłoszona wpłata czeka na potwierdzenie organizatora i do tego czasu nie zmienia salda.
 
-composer require league/oauth2-google
+Saldo = potwierdzone wpłaty minus koszt gier, w których osoba była.
 
-composer require league/oauth2-facebook
+Nowy organizator: checkbox „Organizator” w formularzu osoby albo komenda
+`php bin/console app:user:admin adres@example.com` (z `--remove` odbiera rolę). Pierwszego organizatora
+trzeba nadać komendą, bo logowanie przez Google tworzy tylko zwykłe konta.
 
-php bin/console doctrine:database:create
+## Uruchomienie lokalnie
 
-php bin/console doctrine:schema:validate
-
-php bin/console make:entity
-
-Place
-
-php bin/console doctrine:schema:validate
-
-php bin/console make:migration
-
+```
+composer install
+cp .env .env.local        # ustaw w .env.local: DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 php bin/console doctrine:migrations:migrate
+symfony server:start      # albo: php -S 127.0.0.1:8000 -t public
+```
 
-php bin/console doctrine:schema:validate
+Bez serwera MySQL można użyć SQLite: w `.env.local` ustaw
+`DATABASE_URL="sqlite:///%kernel.project_dir%/var/data_dev.db"` i zamiast migracji uruchom
+`php bin/console doctrine:schema:create` (stare migracje zawierają SQL specyficzny dla MySQL).
 
-php bin/console make:crud
+Lokalnie bez Google: w trybie dev strona `/dev/login` pozwala zalogować się jako dowolna osoba z bazy (nie istnieje w prod ani w testach).
 
-composer require form validator security-csrf annotations
+Logowanie Google: w Google Cloud Console dodaj adres zwrotny `https://TWOJA-DOMENA/connect/google/check`.
 
-php bin/console make:crud
+## Testy
 
-php -S 127.0.0.1:9046
+```
+php bin/phpunit
+```
 
-php bin/console make:user
+Testy funkcjonalne (CRUD wszystkich encji, strona logowania, przekierowanie do Google) działają na SQLite w pliku `var/test.db`, więc nie potrzebują MySQL.
 
-composer require security
+## Co się zmieniło względem Symfony 4.4
 
-php bin/console make:migration
+- Adnotacje Doctrine i `@Route` zastąpione atrybutami PHP, encje mają typowane właściwości.
+- Usunięte `sensio/framework-extra-bundle`, `composer/package-versions-deprecated` oraz niewykorzystywany `UserProvider`.
+- Logowanie: stary Guard authenticator zastąpiony nowym systemem (`GoogleAuthenticator` na `OAuth2Authenticator`, `custom_authenticators`). `User` implementuje `getUserIdentifier()`, dostawca użytkowników szuka po `email`.
+- Kontrolery: `getDoctrine()` zastąpione wstrzykiwanym `EntityManagerInterface`. Dodano `/` (przekierowanie do listy miejsc) oraz `/logout`. Poprzednie przekierowania po logowaniu wskazywały nieistniejące trasy (`default`, `blog_index`).
+- Schemat bazy jest równoważny z dotychczasowym (te same tabele, kolumny, indeksy i klucze), więc istniejąca baza nie wymaga zmian.
+- Pominięty EasyAdmin: w projekcie był podpięty w routingu, ale bez żadnej skonfigurowanej encji.
 
-php bin/console doctrine:migrations:migrate
+## Dostęp i sekrety
 
-php bin/console doctrine:schema:validate
-
-php bin/console make:crud
-
-php -S 127.0.0.1:9046
-
-composer require symfony/asset
-
-git config --global user.email "logic@op.pl"
-git config --global user.name "abedo"
-
-git commit -m "first commit"
-
-git branch -M master
-
-git remote add origin https://github.com/abedo/sportsdoc.git
-
-git push -u origin master
-
-Resources
-https://dev.to/_mertsimsek/integrate-oauth2-for-symfony-4-360c
+- Bez logowania dostępna jest tylko strona logowania. Uprawnienia organizatora są sprawdzane w `config/packages/security.yaml` (`access_control`) i dodatkowo na kontrolerach (`#[IsGranted]`).
+- Każde konto Google, które się zaloguje, dostaje konto z rolą `ROLE_USER`, więc widzi miejsca, gry i listy obecnych. Jeśli lista osób ma być prywatna, trzeba dodać zatwierdzanie nowych kont.
+- Sekretów (hasło bazy, klucze Google) nie trzymamy w repozytorium: tylko w `.env.local` lub zmiennych środowiska.

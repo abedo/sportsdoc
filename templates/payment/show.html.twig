@@ -1,30 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Payment{% endblock %}
+{% block title %}Płatność{% endblock %}
 
 {% block body %}
-    <h1>Payment</h1>
-
-    <table class="table">
+    <h1 class="h3">Płatność</h1>
+    <table class="table bg-white w-auto">
         <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ payment.id }}</td>
-            </tr>
-            <tr>
-                <th>Date</th>
-                <td>{{ payment.date ? payment.date|date('Y-m-d') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Amount</th>
-                <td>{{ payment.amount }}</td>
-            </tr>
+            <tr><th>Data</th><td>{{ payment.date|date('d.m.Y') }}</td></tr>
+            <tr><th>Osoba</th><td>{{ payment.user }}</td></tr>
+            <tr><th>Kwota</th><td>{{ payment.amount }} zł</td></tr>
+            <tr><th>Status</th><td>{{ payment.confirmed ? 'potwierdzona' : 'czeka na potwierdzenie' }}</td></tr>
         </tbody>
     </table>
-
-    <a href="{{ path('payment_index') }}">back to list</a>
-
-    <a href="{{ path('payment_edit', {'id': payment.id}) }}">edit</a>
-
-    {{ include('payment/_delete_form.html.twig') }}
+    <a href="{{ path('payment_index') }}">Wróć do listy</a>
+    <a class="ms-3" href="{{ path('payment_edit', {'id': payment.id}) }}">Edytuj</a>
+    <span class="ms-3">{{ include('_partials/delete_form.html.twig', {route: 'payment_delete', id: payment.id}) }}</span>
 {% endblock %}
