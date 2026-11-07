@@ -1,30 +1,30 @@
 # Sportsdoc
 
-Ewidencja uczestnictwa w zajęciach sportowych: miejsca, gry, lista obecności, wpłaty i rozliczenia. Symfony 8.1, PHP 8.4+, Doctrine ORM 3, logowanie przez Google (KnpU OAuth2).
+Ewidencja uczestnictwa w zajęciach sportowych: miejsca, gry, lista obecności, wpłaty i rozliczenia. Symfony 8.1, PHP 8.4+, Doctrine ORM 3, logowanie przez Google i Facebooka (KnpU OAuth2).
 
 Projekt przeniesiony z Symfony 4.4 (2020). Szczegóły w sekcji „Co się zmieniło”.
 
 ## Jak to działa
 
-**Organizator** (`ROLE_ADMIN`):
-1. Na ekranie startowym przełącza miejsca strzałkami (albo ← →, albo przesunięciem palcem).
-2. Na karcie miejsca klika „Dodaj grę” i podaje datę. Koszt jest podpowiedziany z poprzedniej gry w tym miejscu.
-3. Na stronie edycji gry ustawia koszt i zaznacza, kto był (lista obecności).
-4. W „Płatnościach” potwierdza wpłaty zgłoszone przez osoby i zarządza osobami.
+Zapisy na zajęcia odbywają się poza aplikacją (np. na grupach na Facebooku). Sportsdoc służy do obecności i rozliczeń. Facebook nie udostępnia API grup, więc nic nie jest stamtąd importowane.
 
-**Zwykła osoba** (`ROLE_USER`): przegląda miejsca i gry, w widoku gry zaznacza „Byłem / Nie byłem” tylko dla siebie, a w „Moim rozliczeniu” widzi saldo i zgłasza wpłatę. Zgłoszona wpłata czeka na potwierdzenie organizatora i do tego czasu nie zmienia salda.
+**Role.** Rola jest per miejsce:
+- **Organizator miejsca** zakłada miejsce (musi mieć globalną rolę `ROLE_ORGANIZER`) i od razu zostaje jego organizatorem. W swoim miejscu dodaje gry, zaznacza obecność wszystkich, potwierdza wpłaty, mianuje innych organizatorów i usuwa uczestników. Nie ma uprawnień w cudzych miejscach.
+- **Uczestnik** wyszukuje miejsce („Znajdź miejsce”: po nazwie lub mieście) i dołącza jednym kliknięciem. Zaznacza „Byłem / Nie byłem” tylko dla siebie i zgłasza wpłatę. Zgłoszona wpłata czeka na potwierdzenie organizatora tego miejsca i do tego czasu nie zmienia salda.
+- **Administrator serwisu** (`ROLE_ADMIN`) widzi i zmienia wszystko oraz zarządza osobami (`/user/`).
 
-Saldo = potwierdzone wpłaty minus koszt gier, w których osoba była.
+Ekran startowy pokazuje tylko moje miejsca (przełączanie strzałkami, ← → albo przesunięciem palcem). Każde miejsce rozlicza się osobno: saldo = potwierdzone wpłaty minus koszt gier, w których osoba była, w tym miejscu. Opuszczenie miejsca nie kasuje historii.
 
-Nowy organizator: checkbox „Organizator” w formularzu osoby albo komenda
-`php bin/console app:user:admin adres@example.com` (z `--remove` odbiera rolę). Pierwszego organizatora
-trzeba nadać komendą, bo logowanie przez Google tworzy tylko zwykłe konta.
+**Kto zostaje organizatorem.** Nikt nie dostaje tej roli sam. Administrator nadaje ją checkboxem w formularzu osoby albo komendą:
+`php bin/console app:user:admin adres@example.com` (organizator), z `--admin` (administrator), z `--remove` odbiera rolę. Pierwszego administratora trzeba nadać komendą (`--admin`), bo logowanie tworzy tylko zwykłe konta. Osoba musi mieć adres e-mail w profilu, więc organizatora, który loguje się Facebookiem bez e-maila, nadaje się w panelu `/user/`.
+
+**Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do osoby dodanej wcześniej w panelu z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta). Drugiego dostawcę osoba łączy sama w „Moim rozliczeniu”.
 
 ## Uruchomienie lokalnie
 
 ```
 composer install
-cp .env .env.local        # ustaw w .env.local: DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+cp .env .env.local        # ustaw w .env.local: DATABASE_URL, GOOGLE_CLIENT_ID/SECRET, FACEBOOK_APP_ID/SECRET
 php bin/console doctrine:migrations:migrate
 symfony server:start      # albo: php -S 127.0.0.1:8000 -t public
 ```
@@ -36,6 +36,8 @@ Bez serwera MySQL można użyć SQLite: w `.env.local` ustaw
 Lokalnie bez Google: w trybie dev strona `/dev/login` pozwala zalogować się jako dowolna osoba z bazy (nie istnieje w prod ani w testach).
 
 Logowanie Google: w Google Cloud Console dodaj adres zwrotny `https://TWOJA-DOMENA/connect/google/check`.
+
+Logowanie Facebook: w developers.facebook.com utwórz aplikację z produktem „Facebook Login” i dodaj ważny adres przekierowania `https://TWOJA-DOMENA/connect/facebook/check`. Dopóki aplikacja jest w trybie deweloperskim, logować mogą się tylko osoby dodane jako testerzy. Żeby otworzyć ją dla wszystkich, przełącz aplikację na tryb publiczny, a przed tym podaj adres polityki prywatności i adres usuwania danych użytkownika. Wystarczą uprawnienia `public_profile` i `email` (nie wymagają pełnej weryfikacji aplikacji).
 
 ## Testy
 
@@ -49,13 +51,31 @@ Testy funkcjonalne (CRUD wszystkich encji, strona logowania, przekierowanie do G
 
 - Adnotacje Doctrine i `@Route` zastąpione atrybutami PHP, encje mają typowane właściwości.
 - Usunięte `sensio/framework-extra-bundle`, `composer/package-versions-deprecated` oraz niewykorzystywany `UserProvider`.
-- Logowanie: stary Guard authenticator zastąpiony nowym systemem (`GoogleAuthenticator` na `OAuth2Authenticator`, `custom_authenticators`). `User` implementuje `getUserIdentifier()`, dostawca użytkowników szuka po `email`.
+- Logowanie: stary Guard authenticator zastąpiony nowym systemem (`SocialAuthenticator` na `OAuth2Authenticator`, `custom_authenticators`). `User` implementuje `getUserIdentifier()` (id osoby).
 - Kontrolery: `getDoctrine()` zastąpione wstrzykiwanym `EntityManagerInterface`. Dodano `/` (przekierowanie do listy miejsc) oraz `/logout`. Poprzednie przekierowania po logowaniu wskazywały nieistniejące trasy (`default`, `blog_index`).
 - Schemat bazy jest równoważny z dotychczasowym (te same tabele, kolumny, indeksy i klucze), więc istniejąca baza nie wymaga zmian.
 - Pominięty EasyAdmin: w projekcie był podpięty w routingu, ale bez żadnej skonfigurowanej encji.
 
+## Wdrożenie na iqhost
+
+`deploy/iqhost.sh` buduje paczkę bez zależności dev i testów, wgrywa ją przez rsync (klucz `~/.ssh/iqhost_ed25519`, konto `host32414`, host `host32414.iqhs.pl`) do `~/domains/abedo.pl/public_html/sportsdoc` i ogrzewa cache PHP 8.4. Główny `.htaccess` kieruje ruch do `public/`. Skrypt nie nadpisuje `var/` ani `.env.local`.
+
+**PHP:** Symfony 8 wymaga 8.4, a panel DirectAdmin oferuje dla tej domeny tylko 8.3 i 7.4. Wersję 8.4 wymusza linia `AddHandler application/x-httpd-php84 php` w `.htaccess` (w głównym i w `public/`). Nie usuwaj jej. CLI na serwerze: `/opt/alt/php84/usr/bin/php`.
+
+**Pierwsze uruchomienie** (jednorazowo, na serwerze w `.env.local`, który nie trafia do repozytorium):
+
+```
+DATABASE_URL="mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY?serverVersion=8.0.32&charset=utf8mb4"
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+FACEBOOK_APP_ID=...
+FACEBOOK_APP_SECRET=...
+```
+
+Potem na serwerze: `php bin/console doctrine:migrations:migrate --env=prod` i nadanie pierwszego administratora: `php bin/console app:user:admin adres@example.com --admin --env=prod` (osoba musi się wcześniej zalogować przez Google albo zostać dodana w bazie). Adresy zwrotne: `https://sportsdoc.abedo.pl/connect/google/check` (Google Cloud Console) i `https://sportsdoc.abedo.pl/connect/facebook/check` (Facebook Login).
+
 ## Dostęp i sekrety
 
-- Bez logowania dostępna jest tylko strona logowania. Uprawnienia organizatora są sprawdzane w `config/packages/security.yaml` (`access_control`) i dodatkowo na kontrolerach (`#[IsGranted]`).
-- Każde konto Google, które się zaloguje, dostaje konto z rolą `ROLE_USER`, więc widzi miejsca, gry i listy obecnych. Jeśli lista osób ma być prywatna, trzeba dodać zatwierdzanie nowych kont.
-- Sekretów (hasło bazy, klucze Google) nie trzymamy w repozytorium: tylko w `.env.local` lub zmiennych środowiska.
+- Bez logowania dostępna jest tylko strona logowania. Uprawnienia do miejsc, gier i wpłat sprawdza `PlaceVoter` (`PLACE_VIEW`: członek miejsca, `PLACE_MANAGE`: organizator miejsca, administrator ma oba). Globalne reguły są w `config/packages/security.yaml`.
+- Każde konto, które się zaloguje, jest zwykłą osobą bez dostępu do żadnego miejsca, dopóki do niego nie dołączy. Miejsca są jawne w wyszukiwarce (nazwa i adres), a lista uczestników i obecności jest widoczna tylko dla członków. Jeśli dołączanie ma wymagać zatwierdzenia, trzeba dodać prośby o dołączenie.
+- Sekretów (hasło bazy, klucze Google i Facebooka) nie trzymamy w repozytorium: tylko w `.env.local` lub zmiennych środowiska.

@@ -15,11 +15,17 @@ final class UserAdminCommandTest extends DatabaseWebTestCase
 
         self::assertSame(0, $tester->execute(['email' => 'jan@example.com']));
         $this->em->clear();
+        self::assertContains('ROLE_ORGANIZER', $this->em->find($user::class, $user->getId())->getRoles());
+        self::assertNotContains('ROLE_ADMIN', $this->em->find($user::class, $user->getId())->getRoles());
+
+        self::assertSame(0, $tester->execute(['email' => 'jan@example.com', '--admin' => true]));
+        $this->em->clear();
         self::assertContains('ROLE_ADMIN', $this->em->find($user::class, $user->getId())->getRoles());
 
         self::assertSame(0, $tester->execute(['email' => 'jan@example.com', '--remove' => true]));
+        self::assertSame(0, $tester->execute(['email' => 'jan@example.com', '--admin' => true, '--remove' => true]));
         $this->em->clear();
-        self::assertNotContains('ROLE_ADMIN', $this->em->find($user::class, $user->getId())->getRoles());
+        self::assertSame(['ROLE_USER'], $this->em->find($user::class, $user->getId())->getRoles());
     }
 
     public function testUnknownEmailFails(): void

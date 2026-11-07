@@ -50,7 +50,7 @@ final class UserController extends AbstractController
     {
         return $this->render('user/show.html.twig', [
             'user' => $user,
-            'balance' => $balanceCalculator->forUser($user),
+            'balances' => $balanceCalculator->forUser($user),
         ]);
     }
 

@@ -1,14 +1,16 @@
 security:
-    # Użytkownicy żyją w bazie; logowanie jest wyłącznie przez Google (bez haseł).
+    # Użytkownicy żyją w bazie; logowanie wyłącznie przez Google lub Facebooka (bez haseł).
     providers:
         app_user_provider:
             entity:
                 class: App\Entity\User
-                property: email
+                property: id
 
-    # Organizator (ROLE_ADMIN) może wszystko, co zwykła osoba (ROLE_USER).
+    # ROLE_ORGANIZER: może zakładać miejsca (w swoich miejscach zarządza jako organizator miejsca).
+    # ROLE_ADMIN: administrator serwisu, może wszystko. Uprawnienia per miejsce sprawdza PlaceVoter.
     role_hierarchy:
-        ROLE_ADMIN: ROLE_USER
+        ROLE_ORGANIZER: ROLE_USER
+        ROLE_ADMIN: [ROLE_ORGANIZER, ROLE_USER]
 
     firewalls:
         dev:
@@ -18,18 +20,15 @@ security:
             lazy: true
             provider: app_user_provider
             custom_authenticators:
-                - App\Security\GoogleAuthenticator
+                - App\Security\SocialAuthenticator
             logout:
                 path: app_logout
                 target: security_login
 
-    # Bez logowania dostępne jest tylko logowanie. Uprawnienia admina są też na kontrolerach (#[IsGranted]).
+    # Bez logowania dostępne jest tylko logowanie. Uprawnienia do miejsc, gier i wpłat sprawdza PlaceVoter na kontrolerach.
     access_control:
         - { path: ^/(login|connect|logout), roles: PUBLIC_ACCESS }
         - { path: ^/dev/login, roles: PUBLIC_ACCESS }
-        # Adresy tylko dla organizatora blokujemy tu, zanim kontroler wczyta encję (403 zamiast 404 dla zwykłej osoby).
-        - { path: '^/(user|payment)(/|$)', roles: ROLE_ADMIN }
-        - { path: '^/place/(new|\d+/edit)$', roles: ROLE_ADMIN }
-        - { path: '^/game/(new|\d+/(edit|attendance))$', roles: ROLE_ADMIN }
-        - { path: '^/(place|game)/\d+$', methods: [DELETE], roles: ROLE_ADMIN }
+        - { path: '^/user(/|$)', roles: ROLE_ADMIN }
+        - { path: '^/place/new$', roles: ROLE_ORGANIZER }
         - { path: ^/, roles: ROLE_USER }

@@ -35,15 +35,17 @@ class AttendanceRepository extends ServiceEntityRepository
         return $map;
     }
 
-    /** Liczba gier, w których osoba była, i suma ich kosztów. @return array{games: int, cost: int} */
-    public function attendedTotals(User $user): array
+    /** Liczba gier w miejscu, w których osoba była, i suma ich kosztów. @return array{games: int, cost: int} */
+    public function attendedTotals(User $user, Place $place): array
     {
         $row = $this->createQueryBuilder('a')
             ->select('COUNT(a.id) AS games', 'COALESCE(SUM(g.cost), 0) AS cost')
             ->join('a.game', 'g')
             ->where('a.user = :user')
             ->andWhere('a.present = true')
+            ->andWhere('g.place = :place')
             ->setParameter('user', $user)
+            ->setParameter('place', $place)
             ->getQuery()
             ->getSingleResult();
 

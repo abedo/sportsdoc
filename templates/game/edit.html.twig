@@ -17,7 +17,7 @@
             <h2 class="h6 text-uppercase text-muted">Lista obecności <span class="text-muted">({{ presentCount }} z {{ users|length }})</span></h2>
 
             {% if users is empty %}
-                <p class="text-muted">Brak osób. <a href="{{ path('user_new') }}">Dodaj osobę</a>, żeby zaznaczać obecność.</p>
+                <p class="text-muted">W tym miejscu nie ma jeszcze uczestników. Uczestnicy sami dołączają przez „Znajdź miejsce”.</p>
             {% else %}
                 <form method="post" action="{{ path('game_attendance', {'id': game.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('attendance' ~ game.id) }}">

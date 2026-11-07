@@ -15,10 +15,16 @@ class UserType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('email', EmailType::class, ['label' => 'E-mail (taki jak w koncie Google)'])
+            ->add('email', EmailType::class, ['label' => 'E-mail (taki jak w koncie Google, jeśli ma się zalogować Google)', 'required' => false])
             ->add('fullname', TextType::class, ['label' => 'Imię i nazwisko'])
+            ->add('organizer', CheckboxType::class, [
+                'label' => 'Organizator (może zakładać miejsca)',
+                'required' => false,
+                'mapped' => false,
+                'data' => \in_array('ROLE_ORGANIZER', $options['data']?->getRoles() ?? [], true),
+            ])
             ->add('admin', CheckboxType::class, [
-                'label' => 'Organizator (administrator)',
+                'label' => 'Administrator serwisu (widzi i zmienia wszystko)',
                 'required' => false,
                 'mapped' => false,
                 'data' => \in_array('ROLE_ADMIN', $options['data']?->getRoles() ?? [], true),
@@ -28,7 +34,10 @@ class UserType extends AbstractType
         $builder->addEventListener(\Symfony\Component\Form\FormEvents::POST_SUBMIT, static function (\Symfony\Component\Form\FormEvent $event): void {
             /** @var User $user */
             $user = $event->getData();
-            $roles = array_values(array_diff($user->getRoles(), ['ROLE_USER', 'ROLE_ADMIN']));
+            $roles = array_values(array_diff($user->getRoles(), ['ROLE_USER', 'ROLE_ORGANIZER', 'ROLE_ADMIN']));
+            if ($event->getForm()->get('organizer')->getData()) {
+                $roles[] = 'ROLE_ORGANIZER';
+            }
             if ($event->getForm()->get('admin')->getData()) {
                 $roles[] = 'ROLE_ADMIN';
             }

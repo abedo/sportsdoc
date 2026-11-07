@@ -4,6 +4,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Attendance;
 use App\Entity\Payment;
+use App\Entity\Place;
 use App\Entity\User;
 
 /** Flow zwykłej osoby: własna obecność i zgłoszenie wpłaty (potwierdza organizator). */
@@ -17,9 +18,18 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
         $this->jan = $this->makeUser('jan@example.com', 'Jan Kowalski');
     }
 
-    public function testRegularUserDoesNotSeeAdminButtons(): void
+    /** Miejsce, do którego Jan należy jako zwykły uczestnik. */
+    private function janPlace(): \App\Entity\Place
     {
         $place = $this->makePlace();
+        $this->join($place, $this->jan);
+
+        return $place;
+    }
+
+    public function testRegularUserDoesNotSeeAdminButtons(): void
+    {
+        $place = $this->janPlace();
         $this->loginAs($this->jan);
         $this->client->request('GET', '/place/?place='.$place->getId());
         self::assertSelectorExists('.swiper-slide');
@@ -29,7 +39,7 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
 
     public function testUserMarksOwnAttendanceAndChangesIt(): void
     {
-        $game = $this->makeGame($this->makePlace());
+        $game = $this->makeGame($this->janPlace());
         $this->loginAs($this->jan);
 
         $crawler = $this->client->request('GET', '/game/'.$game->getId());
@@ -52,7 +62,7 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
 
     public function testUserCannotMarkSomeoneElsesAttendance(): void
     {
-        $game = $this->makeGame($this->makePlace());
+        $game = $this->makeGame($this->janPlace());
         $ala = $this->makeUser('ala@example.com', 'Ala Nowak');
         $this->loginAs($this->jan);
 
@@ -69,7 +79,7 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
 
     public function testInvalidCsrfOnOwnAttendanceIsRejected(): void
     {
-        $game = $this->makeGame($this->makePlace());
+        $game = $this->makeGame($this->janPlace());
         $this->loginAs($this->jan);
         $this->client->request('POST', '/game/'.$game->getId().'/me', ['_token' => 'zly', 'present' => '1']);
         self::assertResponseRedirects('/game/'.$game->getId());
@@ -78,7 +88,8 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
 
     public function testReportedPaymentIsPendingUntilOrganizerConfirms(): void
     {
-        $game = $this->makeGame($this->makePlace(), cost: 30);
+        $place = $this->janPlace();
+        $game = $this->makeGame($place, cost: 30);
         $this->em->persist((new Attendance())->setGame($game)->setUser($this->jan)->setPresent(true));
         $this->em->flush();
 
@@ -97,7 +108,8 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
         self::assertSame($this->jan->getId(), $payment->getUser()->getId());
 
         // Organizator widzi plakietkę i potwierdza
-        $org = $this->makeUser('org@example.com', 'Organizator', admin: true);
+        $org = $this->makeUser('org@example.com', 'Organizator', organizer: true);
+        $this->join($this->em->find(Place::class, $place->getId()), $org, organizer: true);
         $this->loginAs($org);
         $crawler = $this->client->request('GET', '/payment/');
         self::assertSelectorExists('.navbar .badge.text-bg-warning');
@@ -115,6 +127,7 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
 
     public function testInvalidPaymentAmountIsRejected(): void
     {
+        $this->janPlace();
         $this->loginAs($this->jan);
         $crawler = $this->client->request('GET', '/me');
         $token = $crawler->filter('form[action$="/me/payment"] input[name="_token"]')->attr('value');

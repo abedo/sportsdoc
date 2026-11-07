@@ -8,7 +8,7 @@
             <h1 class="h3 mb-0">Gra {{ game.createdAt|date('d.m.Y') }}</h1>
             <div class="text-muted"><a href="{{ path('place_index', {place: game.place.id}) }}">{{ game.place }}</a>, {{ game.place.city }} · koszt {{ game.cost }} zł</div>
         </div>
-        {% if is_granted('ROLE_ADMIN') %}
+        {% if is_granted('PLACE_MANAGE', game) %}
             <a class="btn btn-outline-primary btn-sm" href="{{ path('game_edit', {'id': game.id}) }}">Edytuj / lista obecności</a>
         {% endif %}
     </div>

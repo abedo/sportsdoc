@@ -15,4 +15,20 @@ class PlaceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Place::class);
     }
+
+    /**
+     * Wyszukiwanie miejsc po nazwie, mieście lub adresie. Puste zapytanie zwraca pierwsze miejsca alfabetycznie.
+     *
+     * @return list<Place>
+     */
+    public function search(string $query, int $limit = 30): array
+    {
+        $qb = $this->createQueryBuilder('p')->orderBy('p.name', 'ASC')->setMaxResults($limit);
+        foreach (array_filter(preg_split('/\s+/u', trim($query)) ?: []) as $i => $word) {
+            $qb->andWhere("p.name LIKE :w$i OR p.city LIKE :w$i OR p.address LIKE :w$i")
+                ->setParameter("w$i", '%'.addcslashes($word, '%_\\').'%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

@@ -5,15 +5,28 @@ namespace App\Tests\Functional;
 use App\Entity\Attendance;
 use App\Entity\Game;
 use App\Entity\Place;
+use App\Entity\PlaceMember;
 use App\Entity\User;
 
 /** Flow organizatora: miejsce -> „Dodaj grę” (data) -> edycja gry (koszt) -> lista obecności. */
 final class OrganizerFlowTest extends DatabaseWebTestCase
 {
+    private User $org;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->loginAs($this->makeUser('org@example.com', 'Organizator', admin: true));
+        $this->org = $this->makeUser('org@example.com', 'Organizator', organizer: true);
+        $this->loginAs($this->org);
+    }
+
+    /** Miejsce, w którym zalogowana osoba jest organizatorem. */
+    private function myPlace(string $name = 'Orlik'): Place
+    {
+        $place = $this->makePlace($name);
+        $this->join($place, $this->org, organizer: true);
+
+        return $place;
     }
 
     public function testNewPlaceShowsUpAsACardAndRedirectsToIt(): void
@@ -28,6 +41,7 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
         $place = $this->em->getRepository(Place::class)->findOneBy(['name' => 'Orlik']);
         self::assertNotNull($place);
         self::assertResponseRedirects('/place/?place='.$place->getId());
+        self::assertTrue($this->em->getRepository(PlaceMember::class)->findOneBy(['place' => $place, 'user' => $this->org])->isOrganizer(), 'twórca miejsca zostaje jego organizatorem');
 
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextContains('.swiper-slide', 'Orlik');
@@ -36,9 +50,9 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
     public function testPlacesSwiperStartsOnRequestedPlace(): void
     {
-        $this->makePlace('Alfa');
-        $b = $this->makePlace('Beta');
-        $this->makePlace('Gamma');
+        $this->myPlace('Alfa');
+        $b = $this->myPlace('Beta');
+        $this->myPlace('Gamma');
 
         $crawler = $this->client->request('GET', '/place/?place='.$b->getId());
         self::assertCount(3, $crawler->filter('.swiper-slide'));
@@ -47,10 +61,13 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
     public function testAddGameFromPlaceWithDateOnlyThenEditCostAndMarkAttendance(): void
     {
-        $place = $this->makePlace();
+        $place = $this->myPlace();
         $this->makeGame($place, cost: 25, date: '2026-10-01');
         $jan = $this->makeUser('jan@example.com', 'Jan Kowalski');
         $ala = $this->makeUser('ala@example.com', 'Ala Nowak');
+        $this->join($place, $jan);
+        $this->join($place, $ala);
+        $this->makeUser('obcy@example.com', 'Obcy Spoza Miejsca');
 
         // „Dodaj grę” z karty miejsca: tylko data
         $crawler = $this->client->request('GET', '/game/new?place='.$place->getId());
@@ -73,7 +90,7 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
         // Lista obecności: zaznaczamy tylko Jana
         $crawler = $this->client->request('GET', '/game/'.$game->getId().'/edit');
-        self::assertCount(3, $crawler->filter('input[name="present[]"]'), 'organizator i dwie osoby');
+        self::assertCount(3, $crawler->filter('input[name="present[]"]'), 'organizator i dwie osoby z miejsca, bez osób spoza miejsca');
         $form = $crawler->selectButton('Zapisz obecność')->form();
         $values = $form->getPhpValues();
         $values['present'] = [(string) $jan->getId()];
@@ -91,9 +108,12 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
     public function testSavingAttendanceTwiceDoesNotDuplicate(): void
     {
-        $game = $this->makeGame($this->makePlace());
+        $place = $this->myPlace();
+        $game = $this->makeGame($place);
         $jan = $this->makeUser('jan@example.com', 'Jan Kowalski');
         $ala = $this->makeUser('ala@example.com', 'Ala Nowak');
+        $this->join($place, $jan);
+        $this->join($place, $ala);
 
         foreach ([[$jan->getId()], [$ala->getId()]] as $ids) {
             $crawler = $this->client->request('GET', '/game/'.$game->getId().'/edit');
@@ -112,7 +132,7 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
     public function testInvalidCsrfOnAttendanceDoesNotSave(): void
     {
-        $game = $this->makeGame($this->makePlace());
+        $game = $this->makeGame($this->myPlace());
         $this->client->request('POST', '/game/'.$game->getId().'/attendance', ['_token' => 'zly', 'present' => ['1']]);
         self::assertResponseRedirects('/game/'.$game->getId().'/edit');
         self::assertCount(0, $this->em->getRepository(Attendance::class)->findAll());
@@ -120,7 +140,7 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
     public function testPlaceWithGamesCannotBeDeleted(): void
     {
-        $place = $this->makePlace();
+        $place = $this->myPlace();
         $this->makeGame($place);
 
         $crawler = $this->client->request('GET', '/place/?place='.$place->getId());
@@ -132,9 +152,10 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
 
     public function testDeleteGameRemovesItsAttendanceAndReturnsToPlace(): void
     {
-        $place = $this->makePlace();
+        $place = $this->myPlace();
         $game = $this->makeGame($place);
         $jan = $this->makeUser('jan@example.com', 'Jan Kowalski');
+        $this->join($place, $jan);
         $this->em->persist((new Attendance())->setGame($game)->setUser($jan)->setPresent(true));
         $this->em->flush();
 
@@ -146,16 +167,18 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
         self::assertCount(0, $this->em->getRepository(Attendance::class)->findAll());
     }
 
-    public function testUserFormCanGrantOrganizerRole(): void
+    public function testAdminCanGrantOrganizerRoleInUserForm(): void
     {
+        $this->loginAs($this->makeUser('admin@example.com', 'Admin', admin: true));
         $crawler = $this->client->request('GET', '/user/new');
         $this->client->submit($crawler->selectButton('Dodaj')->form([
             'user[email]' => 'nowy@example.com',
             'user[fullname]' => 'Nowy Organizator',
-            'user[admin]' => true,
+            'user[organizer]' => true,
         ]));
         self::assertResponseRedirects('/user/');
         $user = $this->em->getRepository(User::class)->findOneBy(['email' => 'nowy@example.com']);
-        self::assertContains('ROLE_ADMIN', $user->getRoles());
+        self::assertContains('ROLE_ORGANIZER', $user->getRoles());
+        self::assertNotContains('ROLE_ADMIN', $user->getRoles());
     }
 }

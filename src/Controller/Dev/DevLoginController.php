@@ -4,7 +4,7 @@ namespace App\Controller\Dev;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\Security\GoogleAuthenticator;
+use App\Security\SocialAuthenticator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\When;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +25,7 @@ final class DevLoginController extends AbstractController
     }
 
     #[Route('/dev/login/{id}', name: 'dev_login_as', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function loginAs(User $user, UserAuthenticatorInterface $userAuthenticator, GoogleAuthenticator $authenticator, \Symfony\Component\HttpFoundation\Request $request): Response
+    public function loginAs(User $user, UserAuthenticatorInterface $userAuthenticator, SocialAuthenticator $authenticator, \Symfony\Component\HttpFoundation\Request $request): Response
     {
         return $userAuthenticator->authenticateUser($user, $authenticator, $request) ?? $this->redirectToRoute('place_index');
     }

@@ -31,8 +31,13 @@ class Place
     #[ORM\OneToMany(targetEntity: Game::class, mappedBy: 'place')]
     private Collection $games;
 
+    /** @var Collection<int, PlaceMember> */
+    #[ORM\OneToMany(targetEntity: PlaceMember::class, mappedBy: 'place')]
+    private Collection $members;
+
     public function __construct()
     {
+        $this->members = new ArrayCollection();
         $this->games = new ArrayCollection();
     }
 
@@ -87,6 +92,12 @@ class Place
         $this->zip = $zip;
 
         return $this;
+    }
+
+    /** @return Collection<int, PlaceMember> */
+    public function getMembers(): Collection
+    {
+        return $this->members;
     }
 
     /** @return Collection<int, Game> */

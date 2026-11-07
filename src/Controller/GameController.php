@@ -10,8 +10,9 @@ use App\Form\GameCreateType;
 use App\Form\GameType;
 use App\Repository\AttendanceRepository;
 use App\Repository\GameRepository;
+use App\Repository\PlaceMemberRepository;
 use App\Repository\PlaceRepository;
-use App\Repository\UserRepository;
+use App\Security\PlaceVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,16 +24,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class GameController extends AbstractController
 {
     #[Route('/', name: 'game_index', methods: ['GET'])]
-    public function index(GameRepository $gameRepository, AttendanceRepository $attendanceRepository): Response
+    public function index(GameRepository $gameRepository, AttendanceRepository $attendanceRepository, PlaceMemberRepository $members): Response
     {
+        $me = $this->getUser();
+
         return $this->render('game/index.html.twig', [
-            'games' => $gameRepository->latest(),
+            'games' => $me instanceof User ? $gameRepository->latestForPlaces($members->placesOf($me)) : [],
             'presentCounts' => $attendanceRepository->presentCountsByGame(),
         ]);
     }
 
     /** Krok 1 flow organizatora: nowa gra z karty miejsca, na razie tylko data. */
-    #[IsGranted('ROLE_ADMIN')]
     #[Route('/new', name: 'game_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, PlaceRepository $placeRepository, GameRepository $gameRepository): Response
     {
@@ -42,6 +44,7 @@ final class GameController extends AbstractController
 
             return $this->redirectToRoute('place_index');
         }
+        $this->denyAccessUnlessGranted(PlaceVoter::MANAGE, $place);
 
         $game = (new Game())->setPlace($place)->setCost($gameRepository->lastCostForPlace($place));
         $form = $this->createForm(GameCreateType::class, $game);
@@ -60,29 +63,33 @@ final class GameController extends AbstractController
 
     /** Widok dla wszystkich: szczegóły, kto był, a zwykła osoba zaznacza własną obecność. */
     #[Route('/{id}', name: 'game_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function show(Game $game, UserRepository $userRepository, AttendanceRepository $attendanceRepository): Response
+    #[IsGranted(PlaceVoter::VIEW, subject: 'game')]
+    public function show(Game $game, AttendanceRepository $attendanceRepository): Response
     {
         $presence = $attendanceRepository->presenceMapForGame($game);
         $me = $this->getUser();
 
+        $present = array_map(
+            static fn (Attendance $a): User => $a->getUser(),
+            $attendanceRepository->findBy(['game' => $game, 'present' => true]),
+        );
+        usort($present, static fn (User $a, User $b): int => strcasecmp((string) $a->getFullname(), (string) $b->getFullname()));
+
         return $this->render('game/show.html.twig', [
             'game' => $game,
-            'presentUsers' => array_values(array_filter(
-                $userRepository->findBy([], ['fullname' => 'ASC']),
-                static fn (User $u): bool => $presence[$u->getId()] ?? false,
-            )),
+            'presentUsers' => $present,
             'myPresence' => $me instanceof User ? ($presence[$me->getId()] ?? null) : null,
         ]);
     }
 
     /** Krok 2 flow organizatora: edycja gry i lista obecności. */
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(PlaceVoter::MANAGE, subject: 'game')]
     #[Route('/{id}/edit', name: 'game_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(
         Request $request,
         Game $game,
         EntityManagerInterface $entityManager,
-        UserRepository $userRepository,
+        PlaceMemberRepository $members,
         AttendanceRepository $attendanceRepository,
     ): Response {
         $form = $this->createForm(GameType::class, $game);
@@ -100,19 +107,19 @@ final class GameController extends AbstractController
         return $this->render('game/edit.html.twig', [
             'game' => $game,
             'form' => $form,
-            'users' => $userRepository->findBy([], ['fullname' => 'ASC']),
+            'users' => $members->usersOf($game->getPlace()),
             'presence' => $presence,
             'presentCount' => count(array_filter($presence)),
         ]);
     }
 
     /** Organizator zapisuje listę obecności wszystkich: zaznaczeni „byli”, pozostali „nie byli”. */
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(PlaceVoter::MANAGE, subject: 'game')]
     #[Route('/{id}/attendance', name: 'game_attendance', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function saveAttendance(
         Request $request,
         Game $game,
-        UserRepository $userRepository,
+        PlaceMemberRepository $members,
         AttendanceRepository $attendanceRepository,
         EntityManagerInterface $entityManager,
     ): Response {
@@ -128,7 +135,7 @@ final class GameController extends AbstractController
             $existing[(int) $attendance->getUser()?->getId()] = $attendance;
         }
 
-        foreach ($userRepository->findAll() as $user) {
+        foreach ($members->usersOf($game->getPlace()) as $user) {
             $attendance = $existing[$user->getId()] ?? (new Attendance())->setGame($game)->setUser($user);
             $attendance->setPresent(in_array($user->getId(), $presentIds, true));
             $entityManager->persist($attendance);
@@ -142,6 +149,7 @@ final class GameController extends AbstractController
 
     /** Zwykła osoba zaznacza wyłącznie własną obecność („byłem” / „nie byłem”). */
     #[Route('/{id}/me', name: 'game_attendance_me', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted(PlaceVoter::VIEW, subject: 'game')]
     public function saveMyAttendance(
         Request $request,
         Game $game,
@@ -168,7 +176,7 @@ final class GameController extends AbstractController
         return $this->redirectToRoute('game_show', ['id' => $game->getId()]);
     }
 
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(PlaceVoter::MANAGE, subject: 'game')]
     #[Route('/{id}', name: 'game_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Game $game, EntityManagerInterface $entityManager): Response
     {

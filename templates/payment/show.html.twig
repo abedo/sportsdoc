@@ -7,6 +7,7 @@
     <table class="table bg-white w-auto">
         <tbody>
             <tr><th>Data</th><td>{{ payment.date|date('d.m.Y') }}</td></tr>
+            <tr><th>Miejsce</th><td>{{ payment.place }}</td></tr>
             <tr><th>Osoba</th><td>{{ payment.user }}</td></tr>
             <tr><th>Kwota</th><td>{{ payment.amount }} zł</td></tr>
             <tr><th>Status</th><td>{{ payment.confirmed ? 'potwierdzona' : 'czeka na potwierdzenie' }}</td></tr>

@@ -10,12 +10,13 @@
     <p class="text-muted small">Najpierw wpłaty zgłoszone przez osoby i czekające na potwierdzenie.</p>
     <div class="table-responsive">
         <table class="table table-hover align-middle bg-white">
-            <thead><tr><th>Data</th><th>Osoba</th><th class="text-end">Kwota</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Data</th><th>Miejsce</th><th>Osoba</th><th class="text-end">Kwota</th><th>Status</th><th></th></tr></thead>
             <tbody>
             {% for payment in payments %}
                 <tr class="{{ payment.confirmed ? '' : 'table-warning' }}">
                     <td>{{ payment.date|date('d.m.Y') }}</td>
-                    <td><a href="{{ path('user_show', {'id': payment.user.id}) }}">{{ payment.user }}</a></td>
+                    <td>{{ payment.place }}</td>
+                    <td>{{ payment.user }}</td>
                     <td class="text-end">{{ payment.amount }} zł</td>
                     <td>{% if payment.confirmed %}<span class="badge text-bg-success">potwierdzona</span>{% else %}<span class="badge text-bg-warning">czeka</span>{% endif %}</td>
                     <td class="text-end text-nowrap">
@@ -29,7 +30,7 @@
                     </td>
                 </tr>
             {% else %}
-                <tr><td colspan="5" class="text-muted">Brak płatności.</td></tr>
+                <tr><td colspan="6" class="text-muted">Brak płatności.</td></tr>
             {% endfor %}
             </tbody>
         </table>

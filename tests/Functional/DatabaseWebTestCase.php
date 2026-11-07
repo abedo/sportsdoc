@@ -4,6 +4,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Game;
 use App\Entity\Place;
+use App\Entity\PlaceMember;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -29,13 +30,24 @@ abstract class DatabaseWebTestCase extends WebTestCase
         $this->em->getConnection()->executeStatement('PRAGMA foreign_keys = ON');
     }
 
-    protected function makeUser(string $email, string $name, bool $admin = false): User
+    protected function makeUser(string $email, string $name, bool $admin = false, bool $organizer = false): User
     {
-        $user = (new User())->setEmail($email)->setFullname($name)->setRoles($admin ? ['ROLE_ADMIN'] : []);
+        $roles = array_values(array_filter([$admin ? 'ROLE_ADMIN' : null, $organizer ? 'ROLE_ORGANIZER' : null]));
+        $user = (new User())->setEmail($email)->setFullname($name)->setRoles($roles);
         $this->em->persist($user);
         $this->em->flush();
 
         return $user;
+    }
+
+    /** Dodaje osobę do miejsca (jako uczestnika albo organizatora tego miejsca). */
+    protected function join(Place $place, User $user, bool $organizer = false): PlaceMember
+    {
+        $member = (new PlaceMember())->setPlace($place)->setUser($user)->setOrganizer($organizer);
+        $this->em->persist($member);
+        $this->em->flush();
+
+        return $member;
     }
 
     protected function loginAs(User $user): User

@@ -23,10 +23,18 @@ class GameRepository extends ServiceEntityRepository
         return $this->findBy(['place' => $place], ['createdAt' => 'DESC', 'id' => 'DESC'], $limit);
     }
 
-    /** @return list<Game> wszystkie gry, najnowsze pierwsze */
-    public function latest(): array
+    /**
+     * @param list<Place> $places
+     *
+     * @return list<Game> gry w podanych miejscach, najnowsze pierwsze
+     */
+    public function latestForPlaces(array $places): array
     {
-        return $this->findBy([], ['createdAt' => 'DESC', 'id' => 'DESC']);
+        if ([] === $places) {
+            return [];
+        }
+
+        return $this->findBy(['place' => $places], ['createdAt' => 'DESC', 'id' => 'DESC']);
     }
 
     /** Koszt ostatniej gry w miejscu (podpowiedź dla nowej gry) albo 0. */

@@ -16,7 +16,8 @@ class User implements UserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180, unique: true)]
+    // E-mail jest opcjonalny: Facebook go nie zawsze zwraca.
+    #[ORM\Column(length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
@@ -34,9 +35,14 @@ class User implements UserInterface
     #[ORM\OneToMany(targetEntity: Payment::class, mappedBy: 'user')]
     private Collection $payments;
 
+    /** @var Collection<int, UserIdentity> */
+    #[ORM\OneToMany(targetEntity: UserIdentity::class, mappedBy: 'user')]
+    private Collection $identities;
+
     public function __construct()
     {
         $this->payments = new ArrayCollection();
+        $this->identities = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -50,7 +56,7 @@ class User implements UserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): static
+    public function setEmail(?string $email): static
     {
         $this->email = $email;
 
@@ -81,10 +87,27 @@ class User implements UserInterface
         return $this;
     }
 
-    /** Identyfikator użytkownika w security (logowanie jest po adresie e-mail z Google). */
+    /** Identyfikator w security to id: e-mail bywa pusty (logowanie przez Facebooka). */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string) $this->id;
+    }
+
+    /** @return Collection<int, UserIdentity> */
+    public function getIdentities(): Collection
+    {
+        return $this->identities;
+    }
+
+    public function hasProvider(string $provider): bool
+    {
+        foreach ($this->identities as $identity) {
+            if ($identity->getProvider() === $provider) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return list<string> */

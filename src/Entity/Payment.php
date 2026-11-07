@@ -24,6 +24,11 @@ class Payment
     #[ORM\Column(options: ['default' => true])]
     private bool $confirmed = true;
 
+    /** Wpłata dotyczy jednego miejsca: potwierdza ją jego organizator. */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Place $place = null;
+
     #[ORM\ManyToOne(inversedBy: 'payments')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
@@ -58,6 +63,18 @@ class Payment
     public function setAmount(int $amount): static
     {
         $this->amount = $amount;
+
+        return $this;
+    }
+
+    public function getPlace(): ?Place
+    {
+        return $this->place;
+    }
+
+    public function setPlace(?Place $place): static
+    {
+        $this->place = $place;
 
         return $this;
     }

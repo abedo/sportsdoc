@@ -14,8 +14,8 @@
             {% for user in users %}
                 <tr>
                     <td><a href="{{ path('user_show', {'id': user.id}) }}">{{ user.fullname }}</a></td>
-                    <td>{{ user.email }}</td>
-                    <td>{% if 'ROLE_ADMIN' in user.roles %}<span class="badge text-bg-secondary">organizator</span>{% else %}osoba{% endif %}</td>
+                    <td>{{ user.email ?? '—' }}</td>
+                    <td>{% if 'ROLE_ADMIN' in user.roles %}<span class="badge text-bg-dark">administrator</span>{% elseif 'ROLE_ORGANIZER' in user.roles %}<span class="badge text-bg-secondary">organizator</span>{% else %}osoba{% endif %}</td>
                     <td class="text-end"><a class="btn btn-outline-secondary btn-sm" href="{{ path('user_edit', {'id': user.id}) }}">Edytuj</a></td>
                 </tr>
             {% else %}

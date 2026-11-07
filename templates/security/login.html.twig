@@ -8,8 +8,11 @@
             <div class="card shadow-sm mt-4">
                 <div class="card-body text-center">
                     <h1 class="h4 mb-3">Sportsdoc</h1>
-                    <p class="text-muted">Zaloguj się kontem Google, żeby zaznaczać obecność na grach i zgłaszać wpłaty.</p>
-                    <a href="{{ path('connect_google') }}" class="btn btn-danger w-100">Zaloguj przez Google</a>
+                    <p class="text-muted">Zaloguj się, żeby zaznaczać obecność na grach i zgłaszać wpłaty.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('connect', {provider: 'google'}) }}" class="btn btn-danger">Zaloguj przez Google</a>
+                        <a href="{{ path('connect', {provider: 'facebook'}) }}" class="btn btn-primary">Zaloguj przez Facebooka</a>
+                    </div>
                 </div>
             </div>
         </div>

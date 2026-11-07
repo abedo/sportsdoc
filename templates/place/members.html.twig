@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Uczestnicy: {{ place.name }}{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-0">Uczestnicy</h1>
+            <div class="text-muted">{{ place.name }}, {{ place.city }}</div>
+        </div>
+        <a href="{{ path('place_index', {place: place.id}) }}">Wróć do miejsca</a>
+    </div>
+    <p class="text-muted small">Uczestnicy dołączają sami przez „Znajdź miejsce”. Organizator miejsca zaznacza obecność, potwierdza wpłaty i zarządza uczestnikami.</p>
+
+    <div class="table-responsive">
+        <table class="table align-middle bg-white">
+            <thead><tr><th>Osoba</th><th>Rola</th><th>Od</th><th></th></tr></thead>
+            <tbody>
+            {% for m in members %}
+                <tr>
+                    <td>{{ m.user.fullname }}</td>
+                    <td>{% if m.organizer %}<span class="badge text-bg-secondary">organizator</span>{% else %}uczestnik{% endif %}</td>
+                    <td>{{ m.joinedAt|date('d.m.Y') }}</td>
+                    <td class="text-end text-nowrap">
+                        <form method="post" action="{{ path('place_member_organizer', {'id': place.id, 'memberId': m.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('member' ~ m.id) }}">
+                            <button class="btn btn-outline-secondary btn-sm">{{ m.organizer ? 'Odbierz rolę organizatora' : 'Mianuj organizatorem' }}</button>
+                        </form>
+                        <form method="post" action="{{ path('place_member_remove', {'id': place.id, 'memberId': m.id}) }}" class="d-inline" onsubmit="return confirm('Usunąć tę osobę z miejsca?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('member' ~ m.id) }}">
+                            <button class="btn btn-outline-danger btn-sm">Usuń</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
