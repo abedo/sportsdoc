@@ -6,11 +6,11 @@ security:
                 class: App\Entity\User
                 property: id
 
-    # ROLE_ORGANIZER: może zakładać miejsca (w swoich miejscach zarządza jako organizator miejsca).
-    # ROLE_ADMIN: administrator serwisu, może wszystko. Uprawnienia per miejsce sprawdza PlaceVoter.
+    # Rola wybierana przy pierwszym logowaniu: ROLE_ORGANIZER (zakłada miejsca) albo ROLE_PARTICIPANT.
+    # Uprawnienia w konkretnym miejscu sprawdza PlaceVoter.
     role_hierarchy:
         ROLE_ORGANIZER: ROLE_USER
-        ROLE_ADMIN: [ROLE_ORGANIZER, ROLE_USER]
+        ROLE_PARTICIPANT: ROLE_USER
 
     firewalls:
         dev:
@@ -27,8 +27,7 @@ security:
 
     # Bez logowania dostępne jest tylko logowanie. Uprawnienia do miejsc, gier i wpłat sprawdza PlaceVoter na kontrolerach.
     access_control:
-        - { path: ^/(login|connect|logout), roles: PUBLIC_ACCESS }
+        - { path: ^/(login|connect|logout|help), roles: PUBLIC_ACCESS }
         - { path: ^/dev/login, roles: PUBLIC_ACCESS }
-        - { path: '^/user(/|$)', roles: ROLE_ADMIN }
         - { path: '^/place/new$', roles: ROLE_ORGANIZER }
         - { path: ^/, roles: ROLE_USER }

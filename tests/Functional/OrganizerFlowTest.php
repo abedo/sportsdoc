@@ -166,19 +166,4 @@ final class OrganizerFlowTest extends DatabaseWebTestCase
         self::assertNull($this->em->find(Game::class, $game->getId()));
         self::assertCount(0, $this->em->getRepository(Attendance::class)->findAll());
     }
-
-    public function testAdminCanGrantOrganizerRoleInUserForm(): void
-    {
-        $this->loginAs($this->makeUser('admin@example.com', 'Admin', admin: true));
-        $crawler = $this->client->request('GET', '/user/new');
-        $this->client->submit($crawler->selectButton('Dodaj')->form([
-            'user[email]' => 'nowy@example.com',
-            'user[fullname]' => 'Nowy Organizator',
-            'user[organizer]' => true,
-        ]));
-        self::assertResponseRedirects('/user/');
-        $user = $this->em->getRepository(User::class)->findOneBy(['email' => 'nowy@example.com']);
-        self::assertContains('ROLE_ORGANIZER', $user->getRoles());
-        self::assertNotContains('ROLE_ADMIN', $user->getRoles());
-    }
 }

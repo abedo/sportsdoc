@@ -12,7 +12,7 @@
 <body>
 <nav class="navbar navbar-expand-md navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand fw-semibold" href="{{ path('place_index') }}">Sportsdoc</a>
+        <a class="navbar-brand fw-semibold" href="{{ path('home') }}">Sportsdoc</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Menu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -24,9 +24,6 @@
                     <li class="nav-item"><a class="nav-link{{ route starts with 'game_' ? ' active' }}" href="{{ path('game_index') }}">Gry</a></li>
                     <li class="nav-item"><a class="nav-link{{ route starts with 'me' ? ' active' }}" href="{{ path('me') }}">Moje rozliczenie</a></li>
                 {% endif %}
-                {% if is_granted('ROLE_ADMIN') %}
-                    <li class="nav-item"><a class="nav-link{{ route starts with 'user_' ? ' active' }}" href="{{ path('user_index') }}">Osoby</a></li>
-                {% endif %}
                 {% if is_granted('ROLE_USER') and manages_any_place() %}
                     <li class="nav-item">
                         <a class="nav-link{{ route starts with 'payment_' ? ' active' }}" href="{{ path('payment_index') }}">
@@ -36,10 +33,11 @@
                         </a>
                     </li>
                 {% endif %}
+                <li class="nav-item"><a class="nav-link{{ route == 'help' ? ' active' }}" href="{{ path('help') }}">Instrukcja</a></li>
             </ul>
             <ul class="navbar-nav">
                 {% if app.user %}
-                    <li class="nav-item"><span class="navbar-text me-2">{{ app.user.fullname }}{% if is_granted('ROLE_ADMIN') %} <span class="badge text-bg-secondary">administrator</span>{% elseif is_granted('ROLE_ORGANIZER') %} <span class="badge text-bg-secondary">organizator</span>{% endif %}</span></li>
+                    <li class="nav-item"><span class="navbar-text me-2">{{ app.user.fullname }}{% if app.user.appRole == 'organizer' %} <span class="badge text-bg-secondary">organizator</span>{% elseif app.user.appRole == 'participant' %} <span class="badge text-bg-secondary">uczestnik</span>{% endif %}</span></li>
                     <li class="nav-item"><a class="nav-link" href="{{ path('app_logout') }}">Wyloguj</a></li>
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{{ path('security_login') }}">Zaloguj</a></li>

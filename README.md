@@ -8,17 +8,15 @@ Projekt przeniesiony z Symfony 4.4 (2020). Szczegóły w sekcji „Co się zmien
 
 Zapisy na zajęcia odbywają się poza aplikacją (np. na grupach na Facebooku). Sportsdoc służy do obecności i rozliczeń. Facebook nie udostępnia API grup, więc nic nie jest stamtąd importowane.
 
-**Role.** Rola jest per miejsce:
-- **Organizator miejsca** zakłada miejsce (musi mieć globalną rolę `ROLE_ORGANIZER`) i od razu zostaje jego organizatorem. W swoim miejscu dodaje gry, zaznacza obecność wszystkich, potwierdza wpłaty, mianuje innych organizatorów i usuwa uczestników. Nie ma uprawnień w cudzych miejscach.
+**Role.** Są dwie: organizator i uczestnik. Przy pierwszym logowaniu osoba bez roli widzi stronę z dwoma przyciskami („Jestem organizatorem”, „Jestem uczestnikiem”). Rolę można zmienić w „Moim rozliczeniu”. Po wyborze logowanie prowadzi organizatora na miejsca, a uczestnika na gry. W menu obok nazwy widać etykietę roli. Krótką instrukcję pokazuje publiczna strona `/help`.
+- **Organizator** zakłada miejsca i od razu zostaje organizatorem tego miejsca. W swoim miejscu dodaje gry, zaznacza obecność wszystkich, potwierdza wpłaty, mianuje innych organizatorów i usuwa uczestników. W cudzych miejscach nie ma uprawnień. Zawsze zostaje co najmniej jeden organizator miejsca.
 - **Uczestnik** wyszukuje miejsce („Znajdź miejsce”: po nazwie lub mieście) i dołącza jednym kliknięciem. Zaznacza „Byłem / Nie byłem” tylko dla siebie i zgłasza wpłatę. Zgłoszona wpłata czeka na potwierdzenie organizatora tego miejsca i do tego czasu nie zmienia salda.
-- **Administrator serwisu** (`ROLE_ADMIN`) widzi i zmienia wszystko oraz zarządza osobami (`/user/`).
 
-Ekran startowy pokazuje tylko moje miejsca (przełączanie strzałkami, ← → albo przesunięciem palcem). Każde miejsce rozlicza się osobno: saldo = potwierdzone wpłaty minus koszt gier, w których osoba była, w tym miejscu. Opuszczenie miejsca nie kasuje historii.
+Rolę wybiera każdy sam, nie ma administratora serwisu. Uprawnienia w miejscu wynikają z członkostwa (tabela `place_member`), a globalna rola decyduje tylko o tym, kto może zakładać miejsca.
 
-**Kto zostaje organizatorem.** Nikt nie dostaje tej roli sam. Administrator nadaje ją checkboxem w formularzu osoby albo komendą:
-`php bin/console app:user:admin adres@example.com` (organizator), z `--admin` (administrator), z `--remove` odbiera rolę. Pierwszego administratora trzeba nadać komendą (`--admin`), bo logowanie tworzy tylko zwykłe konta. Osoba musi mieć adres e-mail w profilu, więc organizatora, który loguje się Facebookiem bez e-maila, nadaje się w panelu `/user/`.
+Ekran „Miejsca” pokazuje tylko moje miejsca (przełączanie strzałkami, ← → albo przesunięciem palcem). Każde miejsce rozlicza się osobno: saldo = potwierdzone wpłaty minus koszt gier, w których osoba była, w tym miejscu. Opuszczenie miejsca nie kasuje historii.
 
-**Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do osoby dodanej wcześniej w panelu z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta). Drugiego dostawcę osoba łączy sama w „Moim rozliczeniu”.
+**Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do istniejącej osoby z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta). Drugiego dostawcę osoba łączy sama w „Moim rozliczeniu”.
 
 ## Uruchomienie lokalnie
 
@@ -72,10 +70,10 @@ FACEBOOK_APP_ID=...
 FACEBOOK_APP_SECRET=...
 ```
 
-Potem na serwerze: `php bin/console doctrine:migrations:migrate --env=prod` i nadanie pierwszego administratora: `php bin/console app:user:admin adres@example.com --admin --env=prod` (osoba musi się wcześniej zalogować przez Google albo zostać dodana w bazie). Adresy zwrotne: `https://sportsdoc.abedo.pl/connect/google/check` (Google Cloud Console) i `https://sportsdoc.abedo.pl/connect/facebook/check` (Facebook Login).
+Potem na serwerze: `php bin/console doctrine:migrations:migrate --env=prod`. Pierwsza osoba po zalogowaniu wybiera rolę na stronie powitalnej, więc żadnej komendy nie trzeba. Adresy zwrotne: `https://sportsdoc.abedo.pl/connect/google/check` (Google Cloud Console) i `https://sportsdoc.abedo.pl/connect/facebook/check` (Facebook Login).
 
 ## Dostęp i sekrety
 
-- Bez logowania dostępna jest tylko strona logowania. Uprawnienia do miejsc, gier i wpłat sprawdza `PlaceVoter` (`PLACE_VIEW`: członek miejsca, `PLACE_MANAGE`: organizator miejsca, administrator ma oba). Globalne reguły są w `config/packages/security.yaml`.
+- Bez logowania dostępna jest tylko strona logowania. Uprawnienia do miejsc, gier i wpłat sprawdza `PlaceVoter` (`PLACE_VIEW`: członek miejsca, `PLACE_MANAGE`: organizator miejsca). Globalne reguły są w `config/packages/security.yaml`.
 - Każde konto, które się zaloguje, jest zwykłą osobą bez dostępu do żadnego miejsca, dopóki do niego nie dołączy. Miejsca są jawne w wyszukiwarce (nazwa i adres), a lista uczestników i obecności jest widoczna tylko dla członków. Jeśli dołączanie ma wymagać zatwierdzenia, trzeba dodać prośby o dołączenie.
 - Sekretów (hasło bazy, klucze Google i Facebooka) nie trzymamy w repozytorium: tylko w `.env.local` lub zmiennych środowiska.

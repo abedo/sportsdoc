@@ -14,7 +14,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
  * u dostawcy (UserIdentity), nie po e-mailu.
  *
  * Google: jeśli nie znamy jeszcze identyfikatora, dopinamy go do osoby z tym samym zweryfikowanym e-mailem
- * (np. dodanej wcześniej przez administratora). Facebook: nigdy nie łączymy po e-mailu, bo to ryzyko przejęcia konta;
+ * (np. dodanej wcześniej ręcznie). Facebook: nigdy nie łączymy po e-mailu, bo to ryzyko przejęcia konta;
  * konta łączy sama osoba w „Moim rozliczeniu” ($linkUserId).
  */
 final readonly class SocialUserResolver

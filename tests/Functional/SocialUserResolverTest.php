@@ -31,7 +31,7 @@ final class SocialUserResolverTest extends DatabaseWebTestCase
         self::assertSame([], array_diff($first->getRoles(), ['ROLE_USER']), 'nowa osoba nie dostaje żadnych ról');
     }
 
-    public function testGoogleAttachesToPersonAddedByAdminWithSameVerifiedEmail(): void
+    public function testGoogleAttachesToPersonAddedManuallyWithSameVerifiedEmail(): void
     {
         $added = $this->makeUser('ala@example.com', 'Ala (dodana ręcznie)');
         $user = $this->resolver->resolve('google', ['sub' => 'g-2', 'name' => 'Ala Nowak', 'email' => 'ala@example.com', 'email_verified' => true]);

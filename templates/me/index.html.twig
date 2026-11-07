@@ -71,6 +71,9 @@
         </div>
     </div>
 
+    <h2 class="h6 text-uppercase text-muted mt-4">Rola</h2>
+    <p class="small">Jesteś: <strong>{{ app.user.appRole == 'organizer' ? 'organizatorem' : 'uczestnikiem' }}</strong>. <a href="{{ path('choose_role') }}">Zmień rolę</a></p>
+
     <h2 class="h6 text-uppercase text-muted mt-4">Metody logowania</h2>
     <p class="small text-muted">Połącz drugie konto, żeby logować się Google i Facebookiem do tego samego profilu.</p>
     <div class="d-flex gap-2">

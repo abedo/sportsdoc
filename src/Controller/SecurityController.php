@@ -13,7 +13,7 @@ final class SecurityController extends AbstractController
     {
         // Zalogowany użytkownik nie widzi ponownie strony logowania.
         if ($this->isGranted('ROLE_USER')) {
-            return $this->redirectToRoute('place_index');
+            return $this->redirectToRoute('home');
         }
 
         return $this->render('security/login.html.twig');

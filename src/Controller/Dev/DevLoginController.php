@@ -27,6 +27,6 @@ final class DevLoginController extends AbstractController
     #[Route('/dev/login/{id}', name: 'dev_login_as', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function loginAs(User $user, UserAuthenticatorInterface $userAuthenticator, SocialAuthenticator $authenticator, \Symfony\Component\HttpFoundation\Request $request): Response
     {
-        return $userAuthenticator->authenticateUser($user, $authenticator, $request) ?? $this->redirectToRoute('place_index');
+        return $userAuthenticator->authenticateUser($user, $authenticator, $request) ?? $this->redirectToRoute('home');
     }
 }

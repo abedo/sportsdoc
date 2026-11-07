@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Instrukcja{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Instrukcja</h1>
+    <p class="lead">Sportsdoc zapisuje, kto był na zajęciach i kto ile wpłacił. Zapisy na zajęcia zostają tam, gdzie były (np. grupa na Facebooku).</p>
+
+    <h2 class="h5 mt-4">Na start</h2>
+    <ol>
+        <li>Zaloguj się przez Google albo Facebooka.</li>
+        <li>Wybierz rolę: organizator albo uczestnik. Zmienisz ją w każdej chwili (menu: Moje rozliczenie, sekcja „Rola”).</li>
+        <li>Organizator zakłada miejsce. Uczestnik wyszukuje miejsce i do niego dołącza.</li>
+    </ol>
+
+    <div class="row g-3 mt-1">
+        <div class="col-md-6">
+            <div class="card h-100"><div class="card-body">
+                <h2 class="h5">Organizator</h2>
+                <ul class="mb-0">
+                    <li>Zakłada miejsca i wskazuje innych organizatorów w swoim miejscu.</li>
+                    <li>Dodaje grę: wybiera datę, potem ustawia koszt.</li>
+                    <li>Zaznacza, kto był na grze.</li>
+                    <li>Potwierdza wpłaty zgłoszone przez uczestników albo dodaje wpłatę sam.</li>
+                    <li>Usuwa uczestników z miejsca.</li>
+                    <li>Zarządza tylko swoimi miejscami.</li>
+                </ul>
+            </div></div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100"><div class="card-body">
+                <h2 class="h5">Uczestnik</h2>
+                <ul class="mb-0">
+                    <li>Szuka miejsca („Znajdź miejsce”) i dołącza jednym kliknięciem.</li>
+                    <li>W widoku gry zaznacza „Byłem” lub „Nie byłem” tylko dla siebie.</li>
+                    <li>Po przelewie zgłasza wpłatę w „Moim rozliczeniu”.</li>
+                    <li>Widzi swoje saldo osobno dla każdego miejsca.</li>
+                    <li>Może opuścić miejsce. Historia zostaje.</li>
+                </ul>
+            </div></div>
+        </div>
+    </div>
+
+    <h2 class="h5 mt-4">Rozliczenia</h2>
+    <p>Saldo w miejscu = potwierdzone wpłaty minus koszt gier, w których byłeś. Minus oznacza dopłatę, plus nadpłatę. Zgłoszona wpłata nie zmienia salda, dopóki organizator jej nie potwierdzi.</p>
+{% endblock %}

@@ -11,6 +11,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface
 {
+    public const ROLE_ORGANIZER = 'ROLE_ORGANIZER';
+    public const ROLE_PARTICIPANT = 'ROLE_PARTICIPANT';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -117,6 +120,29 @@ class User implements UserInterface
         $roles[] = 'ROLE_USER';
 
         return array_values(array_unique($roles));
+    }
+
+    /** Rola wybrana przez osobę przy pierwszym logowaniu: 'organizer', 'participant' albo null (jeszcze nie wybrała). */
+    public function getAppRole(): ?string
+    {
+        return match (true) {
+            \in_array(self::ROLE_ORGANIZER, $this->roles, true) => 'organizer',
+            \in_array(self::ROLE_PARTICIPANT, $this->roles, true) => 'participant',
+            default => null,
+        };
+    }
+
+    public function isOrganizer(): bool
+    {
+        return 'organizer' === $this->getAppRole();
+    }
+
+    /** Ustawia wybraną rolę ('organizer' lub 'participant'); wszystkie inne role zostają zastąpione. */
+    public function chooseRole(string $role): static
+    {
+        $this->roles = ['organizer' === $role ? self::ROLE_ORGANIZER : self::ROLE_PARTICIPANT];
+
+        return $this;
     }
 
     /** @param list<string> $roles */

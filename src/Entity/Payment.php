@@ -20,7 +20,7 @@ class Payment
     #[ORM\Column]
     private ?int $amount = null;
 
-    /** Wpłata zgłoszona przez osobę czeka na potwierdzenie organizatora (false). Wpisy admina są od razu potwierdzone. */
+    /** Wpłata zgłoszona przez osobę czeka na potwierdzenie organizatora (false). Wpisy dodane przez organizatora są od razu potwierdzone. */
     #[ORM\Column(options: ['default' => true])]
     private bool $confirmed = true;
 

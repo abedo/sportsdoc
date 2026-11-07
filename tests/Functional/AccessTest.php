@@ -9,7 +9,7 @@ final class AccessTest extends DatabaseWebTestCase
     /** @return iterable<string, array{string}> */
     public static function protectedUrls(): iterable
     {
-        foreach (['/', '/place/', '/place/search', '/game/', '/me', '/user/', '/payment/', '/place/new', '/game/new'] as $url) {
+        foreach (['/', '/place/', '/place/search', '/game/', '/me', '/welcome', '/payment/', '/place/new', '/game/new'] as $url) {
             yield $url => [$url];
         }
     }
@@ -21,20 +21,12 @@ final class AccessTest extends DatabaseWebTestCase
         self::assertResponseRedirects('http://localhost/login');
     }
 
-    /** @return iterable<string, array{string}> */
-    public static function adminOnlyUrls(): iterable
+    public function testHelpPageIsPublic(): void
     {
-        foreach (['/user/', '/user/new'] as $url) {
-            yield $url => [$url];
-        }
-    }
-
-    #[DataProvider('adminOnlyUrls')]
-    public function testOnlyAdminOpensUserManagement(string $url): void
-    {
-        $this->loginAs($this->makeUser('org@example.com', 'Organizator', organizer: true));
-        $this->client->request('GET', $url);
-        self::assertResponseStatusCodeSame(403);
+        $this->client->request('GET', '/help');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Organizator');
+        self::assertSelectorTextContains('body', 'Uczestnik');
     }
 
     public function testOnlyOrganizersCanAddPlaces(): void
@@ -120,17 +112,6 @@ final class AccessTest extends DatabaseWebTestCase
         $this->loginAs($jan);
 
         foreach (['/place/', '/place/search', '/game/', '/game/'.$game->getId(), '/me'] as $url) {
-            $this->client->request('GET', $url);
-            self::assertResponseIsSuccessful($url);
-        }
-    }
-
-    public function testAdminCanOpenEverythingWithoutMembership(): void
-    {
-        $place = $this->makePlace();
-        $game = $this->makeGame($place);
-        $this->loginAs($this->makeUser('admin@example.com', 'Admin', admin: true));
-        foreach (['/place/', '/game/', '/me', '/user/', '/user/new', '/payment/', '/payment/new', '/place/new', '/game/'.$game->getId(), '/game/'.$game->getId().'/edit', '/place/'.$place->getId().'/members'] as $url) {
             $this->client->request('GET', $url);
             self::assertResponseIsSuccessful($url);
         }

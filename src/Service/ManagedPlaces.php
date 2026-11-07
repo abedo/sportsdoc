@@ -5,22 +5,17 @@ namespace App\Service;
 use App\Entity\Place;
 use App\Entity\User;
 use App\Repository\PlaceMemberRepository;
-use App\Repository\PlaceRepository;
 
-/** Miejsca, którymi osoba zarządza: organizator swoimi, administrator serwisu wszystkimi. */
+/** Miejsca, którymi osoba zarządza: te, w których jest organizatorem. */
 final readonly class ManagedPlaces
 {
-    public function __construct(
-        private PlaceMemberRepository $members,
-        private PlaceRepository $places,
-    ) {
+    public function __construct(private PlaceMemberRepository $members)
+    {
     }
 
     /** @return list<Place> */
     public function forUser(User $user): array
     {
-        return \in_array('ROLE_ADMIN', $user->getRoles(), true)
-            ? $this->places->findBy([], ['name' => 'ASC'])
-            : $this->members->managedPlacesOf($user);
+        return $this->members->managedPlacesOf($user);
     }
 }

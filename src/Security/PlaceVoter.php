@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
  * Uprawnienia per miejsce.
- * PLACE_VIEW: członek miejsca. PLACE_MANAGE: organizator tego miejsca. Administrator serwisu ma jedno i drugie.
+ * PLACE_VIEW: członek miejsca. PLACE_MANAGE: organizator tego miejsca.
  * Podmiotem może być miejsce, gra albo wpłata (uprawnienie wynika z ich miejsca).
  */
 final class PlaceVoter extends Voter
@@ -37,10 +37,6 @@ final class PlaceVoter extends Voter
         if (!$user instanceof User) {
             return false;
         }
-        if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
-            return true;
-        }
-
         $place = $subject instanceof Place ? $subject : $subject->getPlace();
         if (!$place instanceof Place) {
             return false;

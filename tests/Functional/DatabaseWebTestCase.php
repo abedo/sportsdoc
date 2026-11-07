@@ -30,10 +30,13 @@ abstract class DatabaseWebTestCase extends WebTestCase
         $this->em->getConnection()->executeStatement('PRAGMA foreign_keys = ON');
     }
 
-    protected function makeUser(string $email, string $name, bool $admin = false, bool $organizer = false): User
+    /** Domyślnie uczestnik (rola wybrana); $roleless: osoba, która jeszcze nie wybrała roli. */
+    protected function makeUser(string $email, string $name, bool $organizer = false, bool $roleless = false): User
     {
-        $roles = array_values(array_filter([$admin ? 'ROLE_ADMIN' : null, $organizer ? 'ROLE_ORGANIZER' : null]));
-        $user = (new User())->setEmail($email)->setFullname($name)->setRoles($roles);
+        $user = (new User())->setEmail($email)->setFullname($name);
+        if (!$roleless) {
+            $user->chooseRole($organizer ? 'organizer' : 'participant');
+        }
         $this->em->persist($user);
         $this->em->flush();
 
