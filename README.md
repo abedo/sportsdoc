@@ -16,7 +16,7 @@ Rolę wybiera każdy sam, nie ma administratora serwisu. Uprawnienia w miejscu w
 
 Ekran „Miejsca” pokazuje tylko moje miejsca (przełączanie strzałkami, ← → albo przesunięciem palcem). Każde miejsce rozlicza się osobno: saldo = potwierdzone wpłaty minus koszt gier, w których osoba była, w tym miejscu. Opuszczenie miejsca nie kasuje historii.
 
-**Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do istniejącej osoby z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta). Drugiego dostawcę osoba łączy sama w „Moim rozliczeniu”.
+**Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do istniejącej osoby z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta).
 
 ## Uruchomienie lokalnie
 

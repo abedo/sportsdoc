@@ -20,7 +20,6 @@ use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface
 final class SocialAuthenticator extends OAuth2Authenticator implements AuthenticationEntryPointInterface
 {
     public const PROVIDERS = ['google', 'facebook'];
-    public const LINK_SESSION_KEY = 'oauth_link_user_id';
 
     public function __construct(
         private readonly ClientRegistry $clientRegistry,
@@ -39,10 +38,9 @@ final class SocialAuthenticator extends OAuth2Authenticator implements Authentic
         $provider = (string) $this->providerFor($request);
         $client = $this->clientRegistry->getClient($provider);
         $accessToken = $this->fetchAccessToken($client);
-        $linkUserId = $request->getSession()->remove(self::LINK_SESSION_KEY);
 
-        return new SelfValidatingPassport(new UserBadge($accessToken->getToken(), function () use ($provider, $client, $accessToken, $linkUserId): User {
-            return $this->resolver->resolve($provider, $client->fetchUserFromToken($accessToken)->toArray(), null === $linkUserId ? null : (int) $linkUserId);
+        return new SelfValidatingPassport(new UserBadge($accessToken->getToken(), function () use ($provider, $client, $accessToken): User {
+            return $this->resolver->resolve($provider, $client->fetchUserFromToken($accessToken)->toArray());
         }));
     }
 

@@ -26,7 +26,6 @@ final class MeController extends AbstractController
             'balances' => $balanceCalculator->forUser($me),
             'attended' => $attendances->findBy(['user' => $me, 'present' => true], ['id' => 'DESC']),
             'payments' => $payments->findBy(['user' => $me], ['date' => 'DESC', 'id' => 'DESC']),
-            'providers' => array_map(static fn ($i): string => $i->getProvider(), $me->getIdentities()->toArray()),
         ]);
     }
 

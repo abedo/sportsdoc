@@ -66,29 +66,6 @@ final class SocialUserResolverTest extends DatabaseWebTestCase
         self::assertNotSame($g->getId(), $f->getId());
     }
 
-    public function testLinkingAddsSecondProviderToTheLoggedInPerson(): void
-    {
-        $me = $this->resolver->resolve('google', ['sub' => 'g-9', 'name' => 'Ja']);
-        $linked = $this->resolver->resolve('facebook', ['id' => 'fb-9', 'name' => 'Ja na FB'], $me->getId());
-        self::assertSame($me->getId(), $linked->getId());
-        self::assertTrue($me->hasProvider('facebook'));
-
-        // Od teraz Facebook loguje na to samo konto.
-        $login = $this->resolver->resolve('facebook', ['id' => 'fb-9', 'name' => 'Ja na FB']);
-        self::assertSame($me->getId(), $login->getId());
-        self::assertCount(1, $this->em->getRepository(User::class)->findAll());
-    }
-
-    public function testLinkingAnIdentityOwnedBySomeoneElseIsRefused(): void
-    {
-        $other = $this->resolver->resolve('facebook', ['id' => 'fb-5', 'name' => 'Inny']);
-        $me = $this->resolver->resolve('google', ['sub' => 'g-5', 'name' => 'Ja']);
-
-        $this->expectException(AuthenticationException::class);
-        $this->resolver->resolve('facebook', ['id' => 'fb-5', 'name' => 'Inny'], $me->getId());
-        self::assertNotSame($other->getId(), $me->getId());
-    }
-
     public function testMissingProviderIdIsRefused(): void
     {
         $this->expectException(AuthenticationException::class);

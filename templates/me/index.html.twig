@@ -73,16 +73,4 @@
 
     <h2 class="h6 text-uppercase text-muted mt-4">Rola</h2>
     <p class="small">Jesteś: <strong>{{ app.user.appRole == 'organizer' ? 'organizatorem' : 'uczestnikiem' }}</strong>. <a href="{{ path('choose_role') }}">Zmień rolę</a></p>
-
-    <h2 class="h6 text-uppercase text-muted mt-4">Metody logowania</h2>
-    <p class="small text-muted">Połącz drugie konto, żeby logować się Google i Facebookiem do tego samego profilu.</p>
-    <div class="d-flex gap-2">
-        {% for provider, label in {google: 'Google', facebook: 'Facebook'} %}
-            {% if provider in providers %}
-                <span class="btn btn-outline-success btn-sm disabled">{{ label }}: połączono</span>
-            {% else %}
-                <a class="btn btn-outline-primary btn-sm" href="{{ path('connect_link', {provider: provider}) }}">Połącz z {{ label }}</a>
-            {% endif %}
-        {% endfor %}
-    </div>
 {% endblock %}

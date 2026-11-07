@@ -14,8 +14,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
  * u dostawcy (UserIdentity), nie po e-mailu.
  *
  * Google: jeśli nie znamy jeszcze identyfikatora, dopinamy go do osoby z tym samym zweryfikowanym e-mailem
- * (np. dodanej wcześniej ręcznie). Facebook: nigdy nie łączymy po e-mailu, bo to ryzyko przejęcia konta;
- * konta łączy sama osoba w „Moim rozliczeniu” ($linkUserId).
+ * (np. dodanej wcześniej ręcznie). Facebook: nigdy nie łączymy po e-mailu, bo to ryzyko przejęcia konta.
  */
 final readonly class SocialUserResolver
 {
@@ -27,7 +26,7 @@ final readonly class SocialUserResolver
     }
 
     /** @param array<string, mixed> $data dane osoby od dostawcy (id lub sub, name, email) */
-    public function resolve(string $provider, array $data, ?int $linkUserId = null): User
+    public function resolve(string $provider, array $data): User
     {
         $subject = (string) ($data['id'] ?? $data['sub'] ?? '');
         if ('' === $subject) {
@@ -37,9 +36,6 @@ final readonly class SocialUserResolver
         $name = trim((string) ($data['name'] ?? '')) ?: 'Uczestnik';
         $identity = $this->identities->findOneFor($provider, $subject);
 
-        if (null !== $linkUserId) {
-            return $this->link($provider, $subject, $identity, $linkUserId);
-        }
         if (null !== $identity) {
             return $identity->getUser();
         }
@@ -57,24 +53,6 @@ final readonly class SocialUserResolver
         $this->em->refresh($user);
 
         return $user;
-    }
-
-    private function link(string $provider, string $subject, ?UserIdentity $identity, int $linkUserId): User
-    {
-        $target = $this->users->find($linkUserId);
-        if (null === $target) {
-            throw new CustomUserMessageAuthenticationException('Nie udało się połączyć kont.');
-        }
-        if (null !== $identity && $identity->getUser() !== $target) {
-            throw new CustomUserMessageAuthenticationException('To konto jest już połączone z inną osobą w Sportsdoc.');
-        }
-        if (null === $identity) {
-            $this->em->persist(new UserIdentity($provider, $subject, $target));
-            $this->em->flush();
-            $this->em->refresh($target);
-        }
-
-        return $target;
     }
 
     /** E-mail używamy tylko wtedy, gdy dostawca ręczy za jego prawdziwość (Google: email_verified). */
