@@ -41,6 +41,10 @@ final class AccessTest extends DatabaseWebTestCase
         self::assertSelectorTextContains('h1', 'Lista obecności na zajęciach sportowych');
         self::assertSelectorExists('link[rel="canonical"][href$="/help"]');
         self::assertSelectorExists('meta[property="og:title"]');
+        self::assertCount(3, $crawler->filter('main figure img[alt][width][height]'), 'trzy zrzuty ekranu z opisem alt');
+        foreach ($crawler->filter('main figure img') as $img) {
+            self::assertFileExists(__DIR__.'/../../public/'.ltrim((string) parse_url($img->getAttribute('src'), PHP_URL_PATH), '/'));
+        }
 
         $this->client->request('GET', '/login');
         self::assertSelectorExists('meta[name="description"][content*="siatkówka"]');
