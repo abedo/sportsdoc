@@ -1,16 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Instrukcja{% endblock %}
+{% block title %}Lista obecności na zajęciach sportowych: instrukcja{% endblock %}
+{% block description %}Sportsdoc to lista obecności i rozliczenia wpłat na zajęciach sportowych: siatkówka, koszykówka, piłka nożna. Zapisy w grupie na Facebooku, obecności i wpłaty w aplikacji.{% endblock %}
 
 {% block body %}
-    <h1 class="h3">Instrukcja</h1>
-    <p class="lead">Sportsdoc zapisuje, kto był na zajęciach i kto ile wpłacił. Zapisy na zajęcia zostają tam, gdzie były (np. grupa na Facebooku).</p>
+    <h1 class="h3">Lista obecności na zajęciach sportowych: instrukcja</h1>
+    <p class="lead">Sportsdoc to prosta aplikacja do prowadzenia listy obecności na zajęciach sportowych i rozliczania wpłat: siatkówka, koszykówka, piłka nożna, futsal i inne zajęcia grupowe. Zapisy zawodników zostają tam, gdzie były, na przykład w grupie na Facebooku. W Sportsdoc organizator prowadzi listę obecności, a uczestnicy jednym kliknięciem potwierdzają, że byli na treningu lub meczu.</p>
+
+    <h2 class="h5 mt-4">Dla kogo jest Sportsdoc</h2>
+    <p>Dla organizatorów grup sportowych, którzy wynajmują salę albo boisko i co tydzień zbierają zawodników: gra w siatkówkę, koszykówkę, piłkę nożną albo futsal na grupie na Facebooku, gdzie zawodnicy się zapisują. Dla uczestników, którzy chcą wiedzieć, w ilu zajęciach wzięli udział i ile jeszcze mają zapłacić za salę lub boisko. Aplikacja jest przygotowana na telefon: grę dodasz i obecność zaznaczysz na szybko, z boiska.</p>
 
     <h2 class="h5 mt-4">Na start</h2>
     <ol>
         <li>Zaloguj się przez Google albo Facebooka.</li>
         <li>Wybierz rolę: organizator albo uczestnik. Zmienisz ją w każdej chwili (menu: Moje rozliczenie, sekcja „Rola”).</li>
-        <li>Organizator zakłada miejsce. Uczestnik wyszukuje miejsce i do niego dołącza.</li>
+        <li>Organizator zakłada miejsce (sala, boisko, hala). Uczestnik wyszukuje miejsce, w którym gra, i do niego dołącza.</li>
+        <li>Organizator dodaje grę (trening albo mecz), wybierając datę. Uczestnicy zaznaczają obecność.</li>
     </ol>
 
     <div class="row g-3 mt-1">
@@ -18,10 +23,10 @@
             <div class="card h-100"><div class="card-body">
                 <h2 class="h5">Organizator</h2>
                 <ul class="mb-0">
-                    <li>Zakłada miejsca i wskazuje innych organizatorów w swoim miejscu.</li>
-                    <li>Dodaje grę: wybiera datę, potem ustawia koszt.</li>
-                    <li>Zaznacza, kto był na grze.</li>
-                    <li>Potwierdza wpłaty zgłoszone przez uczestników albo dodaje wpłatę sam.</li>
+                    <li>Zakłada miejsca zajęć sportowych i wskazuje innych organizatorów w swoim miejscu.</li>
+                    <li>Dodaje grę: wybiera datę, potem ustawia koszt udziału.</li>
+                    <li>Prowadzi listę obecności: zaznacza, kto był na grze.</li>
+                    <li>Potwierdza wpłaty zgłoszone przez zawodników albo dodaje wpłatę sam.</li>
                     <li>Usuwa uczestników z miejsca.</li>
                     <li>Zarządza tylko swoimi miejscami.</li>
                 </ul>
@@ -29,18 +34,28 @@
         </div>
         <div class="col-md-6">
             <div class="card h-100"><div class="card-body">
-                <h2 class="h5">Uczestnik</h2>
+                <h2 class="h5">Uczestnik (zawodnik)</h2>
                 <ul class="mb-0">
-                    <li>Szuka miejsca („Znajdź miejsce”) i dołącza jednym kliknięciem.</li>
-                    <li>W widoku gry zaznacza „Byłem” lub „Nie byłem” tylko dla siebie.</li>
+                    <li>Szuka miejsca („Znajdź miejsce”) po nazwie lub mieście i dołącza jednym kliknięciem.</li>
+                    <li>W widoku gry zaznacza „Byłem” lub „Nie byłem” tylko dla siebie. Starsze gry przegląda, przesuwając ekran.</li>
                     <li>Po przelewie zgłasza wpłatę w „Moim rozliczeniu”.</li>
                     <li>Widzi swoje saldo osobno dla każdego miejsca.</li>
-                    <li>Może opuścić miejsce. Historia zostaje.</li>
+                    <li>Może opuścić miejsce. Historia obecności zostaje.</li>
                 </ul>
             </div></div>
         </div>
     </div>
 
-    <h2 class="h5 mt-4">Rozliczenia</h2>
-    <p>Saldo w miejscu = potwierdzone wpłaty minus koszt gier, w których byłeś. Minus oznacza dopłatę, plus nadpłatę. Zgłoszona wpłata nie zmienia salda, dopóki organizator jej nie potwierdzi.</p>
+    <h2 class="h5 mt-4">Rozliczenia wpłat za zajęcia</h2>
+    <p>Saldo w miejscu to potwierdzone wpłaty minus koszt gier, w których byłeś. Minus oznacza dopłatę, plus nadpłatę. Zgłoszona wpłata nie zmienia salda, dopóki organizator jej nie potwierdzi. Każde miejsce (sala, boisko) rozlicza się osobno, bo wpłaty trafiają do organizatora danego miejsca.</p>
+
+    <h2 class="h5 mt-4">Najczęstsze pytania</h2>
+    <h3 class="h6">Czy Sportsdoc zastępuje zapisy w grupie na Facebooku?</h3>
+    <p>Nie. Zapisy na zajęcia sportowe, na przykład na siatkówkę, koszykówkę albo piłkę nożną, nadal prowadzisz tam, gdzie dotąd. Sportsdoc służy do tego, co jest potem: lista obecności, kto był na treningu lub meczu, i rozliczenie wpłat. Możesz się zalogować kontem Facebooka lub Google.</p>
+    <h3 class="h6">Jak sprawdzić, kto był na ostatniej grze?</h3>
+    <p>Otwórz miejsce i kliknij ostatnią grę. W widoku gry jest lista obecnych, a przesunięcie ekranu w lewo pokazuje poprzednie gry.</p>
+    <h3 class="h6">Czy da się z tego korzystać na telefonie?</h3>
+    <p>Tak. Aplikacja działa w przeglądarce telefonu: organizator dodaje grę, a zawodnik zaznacza obecność jednym kliknięciem.</p>
+    <h3 class="h6">Skąd mam wiedzieć, ile jestem winien za salę lub boisko?</h3>
+    <p>W „Moim rozliczeniu” widzisz saldo w każdym miejscu: ile gier zaliczyłeś, ile wpłaciłeś i ile zostało do dopłaty.</p>
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Logowanie{% endblock %}
+{% block title %}Lista obecności na zajęciach sportowych: logowanie{% endblock %}
+{% block description %}Sportsdoc to lista obecności i rozliczenia wpłat na zajęciach sportowych: siatkówka, koszykówka, piłka nożna. Zapisy zostają w grupie na Facebooku, obecności prowadzisz tutaj.{% endblock %}
 
 {% block body %}
     <div class="row justify-content-center">
@@ -8,7 +9,7 @@
             <div class="card shadow-sm mt-4">
                 <div class="card-body text-center">
                     <h1 class="h4 mb-3">Sportsdoc</h1>
-                    <p class="text-muted">Zaloguj się, żeby zaznaczać obecność na grach i zgłaszać wpłaty.</p>
+                    <p class="text-muted">Lista obecności i rozliczenia zajęć sportowych: siatkówka, koszykówka, piłka nożna. Zaloguj się, żeby zaznaczać obecność na grach i zgłaszać wpłaty.</p>
                     <div class="d-grid gap-2">
                         <a href="{{ path('connect', {provider: 'google'}) }}" class="btn btn-danger">Zaloguj przez Google</a>
                         <a href="{{ path('connect', {provider: 'facebook'}) }}" class="btn btn-primary">Zaloguj przez Facebooka</a>

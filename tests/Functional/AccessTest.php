@@ -29,6 +29,24 @@ final class AccessTest extends DatabaseWebTestCase
         self::assertSelectorTextContains('body', 'Uczestnik');
     }
 
+    public function testPublicPagesCarrySeoKeywordsAndMeta(): void
+    {
+        $crawler = $this->client->request('GET', '/help');
+        self::assertResponseIsSuccessful();
+        $description = (string) $crawler->filter('meta[name="description"]')->attr('content');
+        foreach (['siatkówka', 'koszykówka', 'piłka nożna', 'Facebooku', 'lista obecności'] as $word) {
+            self::assertStringContainsStringIgnoringCase($word, $description.' '.$crawler->filter('main')->text(), $word);
+        }
+        self::assertStringContainsString('siatkówka', $description);
+        self::assertSelectorTextContains('h1', 'Lista obecności na zajęciach sportowych');
+        self::assertSelectorExists('link[rel="canonical"][href$="/help"]');
+        self::assertSelectorExists('meta[property="og:title"]');
+
+        $this->client->request('GET', '/login');
+        self::assertSelectorExists('meta[name="description"][content*="siatkówka"]');
+        self::assertSelectorTextContains('title', 'obecności');
+    }
+
     public function testOnlyOrganizersCanAddPlaces(): void
     {
         $this->loginAs($this->makeUser('jan@example.com', 'Jan Kowalski'));

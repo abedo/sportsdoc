@@ -13,7 +13,7 @@ AddHandler application/x-httpd-php84 php
     RewriteRule ^ https://sportsdoc.abedo.pl%{REQUEST_URI} [R=301,L]
 
     # Pliki statyczne z public/ (dopisz tu nowe katalogi/pliki, jesli dojda)
-    RewriteRule ^(?!public/)(?:css/.+|js/.+|bundles/.+|robots\.txt|favicon\.ico)$ public/$0 [L]
+    RewriteRule ^(?!public/)(?:css/.+|js/.+|bundles/.+|robots\.txt|sitemap\.xml|favicon\.ico)$ public/$0 [L]
 
     # Reszta to Symfony. Negative lookahead zapobiega petli po przepisaniu.
     # (LiteSpeed nie stosuje public/.htaccess po wewnetrznym przepisaniu, wiec front controller jest tutaj.)

@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /help
+Allow: /privacy
+Allow: /data-deletion
+Disallow: /place
+Disallow: /game
+Disallow: /me
+Disallow: /payment
+Disallow: /welcome
+Disallow: /connect
+Disallow: /logout
+
+Sitemap: https://sportsdoc.abedo.pl/sitemap.xml
