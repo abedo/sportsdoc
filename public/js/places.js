@@ -20,6 +20,8 @@
         url.searchParams.set('place', slide.dataset.placeId);
         window.history.replaceState(null, '', url);
     }
+    // Wysokość karuzeli liczy się po załadowaniu stylów i czcionek, żeby kropki nie zachodziły na ostatnią kartę.
+    window.addEventListener('load', function () { swiper.update(); });
     swiper.on('slideChange', remember);
     remember();
 })();

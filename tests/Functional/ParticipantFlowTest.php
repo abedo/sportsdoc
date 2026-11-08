@@ -137,4 +137,22 @@ final class ParticipantFlowTest extends DatabaseWebTestCase
         }
         self::assertCount(0, $this->em->getRepository(Payment::class)->findAll());
     }
+
+    public function testPlaceCardListsGamesAsSeparateClickableTiles(): void
+    {
+        $place = $this->janPlace();
+        $game = $this->makeGame($place, cost: 30, date: '2026-11-03');
+        $this->em->persist((new Attendance())->setGame($game)->setUser($this->jan)->setPresent(true));
+        $this->em->flush();
+        $this->loginAs($this->jan);
+
+        $crawler = $this->client->request('GET', '/place/?place='.$place->getId());
+        $tile = $crawler->filter('.swiper-slide a.game-tile');
+        self::assertCount(1, $tile);
+        self::assertSame('/game/'.$game->getId(), $tile->attr('href'));
+        self::assertStringContainsString('03.11.2026', $tile->text());
+        self::assertStringContainsString('1 os.', $tile->text());
+        self::assertStringContainsString('30 zł', $tile->text());
+        self::assertCount(2, $crawler->filter('.swiper-slide .card'), 'miejsce i ostatnie gry to dwie osobne karty');
+    }
 }
