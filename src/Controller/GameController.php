@@ -61,24 +61,49 @@ final class GameController extends AbstractController
         return $this->render('game/new.html.twig', ['game' => $game, 'place' => $place, 'form' => $form]);
     }
 
-    /** Widok dla wszystkich: szczegóły, kto był, a zwykła osoba zaznacza własną obecność. */
+    /**
+     * Widok gry jako slider po wszystkich grach miejsca (najnowsza pierwsza): strzałka w prawo albo przesunięcie
+     * w lewo pokazuje starsze gry. Wchodzimy na slajd wybranej gry. Zwykła osoba zaznacza własną obecność jednym kliknięciem.
+     */
     #[Route('/{id}', name: 'game_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted(PlaceVoter::VIEW, subject: 'game')]
-    public function show(Game $game, AttendanceRepository $attendanceRepository): Response
+    public function show(Game $game, GameRepository $gameRepository, AttendanceRepository $attendanceRepository): Response
     {
-        $presence = $attendanceRepository->presenceMapForGame($game);
         $me = $this->getUser();
+        $games = $gameRepository->allForPlace($game->getPlace());
 
-        $present = array_map(
-            static fn (Attendance $a): User => $a->getUser(),
-            $attendanceRepository->findBy(['game' => $game, 'present' => true]),
-        );
-        usort($present, static fn (User $a, User $b): int => strcasecmp((string) $a->getFullname(), (string) $b->getFullname()));
+        /** @var array<int, list<User>> $present id gry => obecni */
+        $present = [];
+        /** @var array<int, bool> $mine id gry => czy byłem (brak klucza: jeszcze nie zaznaczono) */
+        $mine = [];
+        foreach ($attendanceRepository->forPlace($game->getPlace()) as $attendance) {
+            $gameId = (int) $attendance->getGame()?->getId();
+            $user = $attendance->getUser();
+            if ($attendance->isPresent() && $user instanceof User) {
+                $present[$gameId][] = $user;
+            }
+            if ($me instanceof User && $user?->getId() === $me->getId()) {
+                $mine[$gameId] = $attendance->isPresent();
+            }
+        }
+        foreach ($present as &$users) {
+            usort($users, static fn (User $a, User $b): int => strcasecmp((string) $a->getFullname(), (string) $b->getFullname()));
+        }
+        unset($users);
+
+        $initial = 0;
+        foreach ($games as $i => $candidate) {
+            if ($candidate->getId() === $game->getId()) {
+                $initial = $i;
+            }
+        }
 
         return $this->render('game/show.html.twig', [
             'game' => $game,
-            'presentUsers' => $present,
-            'myPresence' => $me instanceof User ? ($presence[$me->getId()] ?? null) : null,
+            'games' => $games,
+            'initial' => $initial,
+            'present' => $present,
+            'mine' => $mine,
         ]);
     }
 

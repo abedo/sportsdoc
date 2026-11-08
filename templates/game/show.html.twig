@@ -2,48 +2,79 @@
 
 {% block title %}Gra {{ game.createdAt|date('d.m.Y') }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11.1.14/swiper-bundle.min.css" rel="stylesheet">
+{% endblock %}
+
 {% block body %}
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <h1 class="h3 mb-0">Gra {{ game.createdAt|date('d.m.Y') }}</h1>
-            <div class="text-muted"><a href="{{ path('place_index', {place: game.place.id}) }}">{{ game.place }}</a>, {{ game.place.city }} · koszt {{ game.cost }} zł</div>
+    <div class="d-flex justify-content-between align-items-baseline mb-2">
+        <div class="text-muted"><a href="{{ path('place_index', {place: game.place.id}) }}">{{ game.place }}</a>, {{ game.place.city }}</div>
+        {% if games|length > 1 %}<div class="small text-muted">Przesuń w lewo albo użyj strzałki, aby zobaczyć starsze gry</div>{% endif %}
+    </div>
+
+    <div class="swiper games-swiper" data-initial="{{ initial }}">
+        <div class="swiper-wrapper">
+            {% for g in games %}
+                {% set myPresence = mine[g.id] ?? null %}
+                {% set presentUsers = present[g.id] ?? [] %}
+                <div class="swiper-slide" data-game-id="{{ g.id }}" data-url="{{ path('game_show', {'id': g.id}) }}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="h3 mb-0">Gra {{ g.createdAt|date('d.m.Y') }}</h1>
+                            <div class="text-muted">koszt {{ g.cost }} zł</div>
+                        </div>
+                        {% if is_granted('PLACE_MANAGE', g) %}
+                            <a class="btn btn-outline-primary btn-sm" href="{{ path('game_edit', {'id': g.id}) }}">Edytuj / lista obecności</a>
+                        {% endif %}
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h2 class="h6 text-uppercase text-muted">Moja obecność</h2>
+                            {% if myPresence is null %}
+                                <p class="mb-2">Nie zaznaczyłeś jeszcze, czy byłeś na tej grze.</p>
+                            {% elseif myPresence %}
+                                <p class="mb-2 text-success fw-semibold">Byłeś na tej grze.</p>
+                            {% else %}
+                                <p class="mb-2 text-danger fw-semibold">Nie byłeś na tej grze.</p>
+                            {% endif %}
+                            <form method="post" action="{{ path('game_attendance_me', {'id': g.id}) }}" class="d-flex gap-2">
+                                <input type="hidden" name="_token" value="{{ csrf_token('attendance-me' ~ g.id) }}">
+                                <button name="present" value="1" class="btn btn-lg flex-fill {{ myPresence ? 'btn-success' : 'btn-outline-success' }}">Byłem</button>
+                                <button name="present" value="0" class="btn btn-lg flex-fill {{ myPresence is same as(false) ? 'btn-danger' : 'btn-outline-danger' }}">Nie byłem</button>
+                            </form>
+                            <div class="small text-muted mt-2">Po grze możesz zgłosić wpłatę w <a href="{{ path('me') }}">Moim rozliczeniu</a>.</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h6 text-uppercase text-muted">Obecni ({{ presentUsers|length }})</h2>
+                            {% if presentUsers is empty %}
+                                <p class="text-muted mb-0">Nikt nie jest jeszcze zaznaczony jako obecny.</p>
+                            {% else %}
+                                <ul class="mb-0">
+                                    {% for u in presentUsers %}<li>{{ u.fullname }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        {% if is_granted('PLACE_MANAGE', game) %}
-            <a class="btn btn-outline-primary btn-sm" href="{{ path('game_edit', {'id': game.id}) }}">Edytuj / lista obecności</a>
+        {% if games|length > 1 %}
+            <div class="swiper-button-prev" aria-label="Nowsza gra"></div>
+            <div class="swiper-button-next" aria-label="Starsza gra"></div>
+            <div class="swiper-pagination"></div>
         {% endif %}
     </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <h2 class="h6 text-uppercase text-muted">Moja obecność</h2>
-            {% if myPresence is null %}
-                <p class="mb-2">Nie zaznaczyłeś jeszcze, czy byłeś na tej grze.</p>
-            {% elseif myPresence %}
-                <p class="mb-2 text-success fw-semibold">Byłeś na tej grze.</p>
-            {% else %}
-                <p class="mb-2 text-danger fw-semibold">Nie byłeś na tej grze.</p>
-            {% endif %}
-            <form method="post" action="{{ path('game_attendance_me', {'id': game.id}) }}" class="d-flex gap-2">
-                <input type="hidden" name="_token" value="{{ csrf_token('attendance-me' ~ game.id) }}">
-                <button name="present" value="1" class="btn {{ myPresence ? 'btn-success' : 'btn-outline-success' }}">Byłem</button>
-                <button name="present" value="0" class="btn {{ myPresence is same as(false) ? 'btn-danger' : 'btn-outline-danger' }}">Nie byłem</button>
-            </form>
-            <div class="small text-muted mt-2">Po grze możesz zgłosić wpłatę w <a href="{{ path('me') }}">Moim rozliczeniu</a>.</div>
-        </div>
-    </div>
+    <p class="mt-2"><a href="{{ path('place_index', {place: game.place.id}) }}">Wróć do miejsca</a></p>
+{% endblock %}
 
-    <div class="card">
-        <div class="card-body">
-            <h2 class="h6 text-uppercase text-muted">Obecni ({{ presentUsers|length }})</h2>
-            {% if presentUsers is empty %}
-                <p class="text-muted mb-0">Nikt nie jest jeszcze zaznaczony jako obecny.</p>
-            {% else %}
-                <ul class="mb-0">
-                    {% for u in presentUsers %}<li>{{ u.fullname }}</li>{% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-    </div>
-
-    <p class="mt-3"><a href="{{ path('place_index', {place: game.place.id}) }}">Wróć do miejsca</a></p>
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11.1.14/swiper-bundle.min.js"></script>
+    <script src="{{ asset('js/games.js') }}"></script>
 {% endblock %}

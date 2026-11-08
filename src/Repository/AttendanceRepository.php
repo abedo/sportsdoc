@@ -35,6 +35,23 @@ class AttendanceRepository extends ServiceEntityRepository
         return $map;
     }
 
+    /**
+     * Wszystkie wpisy obecności ze wszystkich gier miejsca (z osobami), jednym zapytaniem.
+     *
+     * @return list<Attendance>
+     */
+    public function forPlace(Place $place): array
+    {
+        return $this->createQueryBuilder('a')
+            ->addSelect('u')
+            ->join('a.game', 'g')
+            ->join('a.user', 'u')
+            ->where('g.place = :place')
+            ->setParameter('place', $place)
+            ->getQuery()
+            ->getResult();
+    }
+
     /** Liczba gier w miejscu, w których osoba była, i suma ich kosztów. @return array{games: int, cost: int} */
     public function attendedTotals(User $user, Place $place): array
     {

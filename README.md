@@ -14,6 +14,8 @@ Zapisy na zajęcia odbywają się poza aplikacją (np. na grupach na Facebooku).
 
 Rolę wybiera każdy sam, nie ma administratora serwisu. Uprawnienia w miejscu wynikają z członkostwa (tabela `place_member`), a globalna rola decyduje tylko o tym, kto może zakładać miejsca.
 
+Widok gry to slider po wszystkich grach miejsca (najnowsza pierwsza): strzałka w prawo, klawisz → albo przesunięcie w lewo na telefonie pokazuje starsze gry, a adres zmienia się na `/game/ID` aktualnej gry. Na każdym slajdzie uczestnik zaznacza „Byłem / Nie byłem” jednym kliknięciem, a po zapisie wraca na tę samą grę. Karta miejsca pokazuje tylko 5 ostatnich gier.
+
 Ekran „Miejsca” pokazuje tylko moje miejsca (przełączanie strzałkami, ← → albo przesunięciem palcem). Każde miejsce rozlicza się osobno: saldo = potwierdzone wpłaty minus koszt gier, w których osoba była, w tym miejscu. Opuszczenie miejsca nie kasuje historii.
 
 **Logowanie.** Google i Facebook. Osobę rozpoznajemy po stałym identyfikatorze u dostawcy (tabela `user_identity`), a e-mail jest opcjonalny, bo Facebook go nie zawsze zwraca. Google dopina się do istniejącej osoby z tym samym zweryfikowanym e-mailem. Facebook nigdy nie łączy po e-mailu (ryzyko przejęcia konta).

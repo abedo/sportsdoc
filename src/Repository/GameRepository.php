@@ -23,6 +23,12 @@ class GameRepository extends ServiceEntityRepository
         return $this->findBy(['place' => $place], ['createdAt' => 'DESC', 'id' => 'DESC'], $limit);
     }
 
+    /** @return list<Game> wszystkie gry w miejscu, najnowsze pierwsze (slider w widoku gry) */
+    public function allForPlace(Place $place): array
+    {
+        return $this->findBy(['place' => $place], ['createdAt' => 'DESC', 'id' => 'DESC']);
+    }
+
     /**
      * @param list<Place> $places
      *
